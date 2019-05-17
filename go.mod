@@ -1,4 +1,4 @@
-module obase.log
+module github.com/obase/log
 
 go 1.12
 
