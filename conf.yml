@@ -1,0 +1,6 @@
+# 系统日志设置
+log:
+  # 日志级别(必需), DEBUG, INFO, ERROR, FATAL, OFF
+  level: "DEBUG"
+  # 日志路径(必需), stdout表示标准输出, stderr表示标准错误
+  path: "E:/Temp/conf.yml"
