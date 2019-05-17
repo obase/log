@@ -1,13 +1,13 @@
 package zlog
 
 import (
+	. "context"
 	"fmt"
-	"golang.org/x/net/context"
 	"testing"
 	"time"
 )
 
-var ctx context.Context = context.WithValue(context.TODO(), TRACEID, RandTraceId())
+var ctx Context = WithValue(TODO(), TRACEID, RandTraceId())
 
 func TestZlogPerf(t *testing.T) {
 	defer Flush()
