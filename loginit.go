@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const CKEY = "log"
+const CKEY = "logger"
 
 func init() {
 

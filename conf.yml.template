@@ -1,5 +1,5 @@
 # 系统日志设置
-log:
+logger:
   # 统一刷新间隔(可选), 包括默认以及exts配置的其他日志. 默认30s.
   flushPeriod: "30s"
 
