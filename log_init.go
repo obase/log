@@ -12,8 +12,9 @@ func init() {
 	config, ok := conf.GetMap(CKEY)
 	if !ok {
 		Init(DEF_FLUSH_PERIOD, &Option{
-			Level: DEBUG,
-			Path:  STDERR,
+			Level:   DEBUG,
+			Path:    STDERR,
+			Default: true,
 		})
 		return
 	}
