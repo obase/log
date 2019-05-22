@@ -123,7 +123,7 @@ func GetLog(name string) (l *logger) {
 	return
 }
 
-func Init(flushPeriod time.Duration, opts ...*Option) (err error) {
+func Setup(flushPeriod time.Duration, opts ...*Option) (err error) {
 
 	if flushPeriod <= 0 {
 		flushPeriod = DEF_FLUSH_PERIOD
