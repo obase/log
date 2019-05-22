@@ -30,11 +30,11 @@ const (
 	STDOUT = "stdout"
 	STDERR = "stderr"
 
-	DEF_FLUSH_PERIOD        = 30 * time.Second //与glog相同
-	DEF_RECORD_BUF_IDLE     = 256              //与glog相同
-	DEF_RECORD_BUF_SIZE     = 1024             // 默认1K
-	DEF_RECORD_HEADER_BYTES = 24               // 用于header最长的栈
-	DEF_WRITER_BUF_SIZE     = 256 * 1024       //与glog相同, 256k
+	DEF_FLUSH_PERIOD        = 5 * time.Second //与glog相同
+	DEF_RECORD_BUF_IDLE     = 256             //与glog相同
+	DEF_RECORD_BUF_SIZE     = 1024            // 默认1K
+	DEF_RECORD_HEADER_BYTES = 24              // 用于header最长的栈
+	DEF_WRITER_BUF_SIZE     = 256 * 1024      //与glog相同, 256k
 
 	SPACE = '\x20'
 	COLON = ':'
