@@ -11,5 +11,7 @@ type LoggerFunc func(ctx context.Context, format string, args ...interface{})
 var (
 	Errorf LoggerFunc = Error
 	Inforf LoggerFunc = Info
+	Warnf  LoggerFunc = Warn
 	Debugf LoggerFunc = Debug
+	Flushf func()     = Flush
 )
