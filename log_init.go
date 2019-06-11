@@ -13,9 +13,6 @@ var once sync.Once
 func Init() {
 	once.Do(func() {
 
-		// 先初始conf
-		conf.Init()
-
 		config, ok := conf.GetMap(CKEY)
 		if !ok {
 			Setup(DEF_FLUSH_PERIOD, &Option{
