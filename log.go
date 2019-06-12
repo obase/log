@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -15,7 +16,7 @@ const (
 	WARN
 	ERROR
 	FATAL
-	OFF //不输出任何日志
+	OFF  //不输出任何日志
 )
 
 const (
@@ -148,7 +149,11 @@ func Setup(flushPeriod time.Duration, opts ...*Option) (err error) {
 		if opt.Default {
 			Default = lgr
 		} else {
-			Others[opt.Name] = lgr
+			for _, k := range strings.Split(opt.Name, ",") {
+				if k = strings.TrimSpace(k); len(k) > 0 {
+					Others[k] = lgr
+				}
+			}
 		}
 	}
 	// 启动定期刷新么台
