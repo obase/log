@@ -7,7 +7,7 @@ import (
 
 const CKEY = "logger"
 
-func Init() {
+func init() {
 
 	config, ok := conf.GetMap(CKEY)
 	if !ok {
