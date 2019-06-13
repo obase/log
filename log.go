@@ -16,7 +16,7 @@ const (
 	WARN
 	ERROR
 	FATAL
-	OFF  //不输出任何日志
+	OFF //不输出任何日志
 )
 
 const (
@@ -117,11 +117,10 @@ var (
 )
 
 func GetLog(name string) (l *logger) {
-	l, ok := Others[name]
-	if !ok {
-		l = Default
+	if rt, ok := Others[name]; ok {
+		return rt
 	}
-	return
+	return nil
 }
 
 func Setup(flushPeriod time.Duration, opts ...*Option) (err error) {
