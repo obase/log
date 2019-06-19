@@ -220,8 +220,6 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 	idx++
 	val /= 10
 	buf.Tmp[idx] = hexs[val%10]
-	idx++
-	val /= 10
 
 	// 写入buff
 	for idx >= 0 {

@@ -144,7 +144,9 @@ func Setup(flushPeriod time.Duration, opts ...*Option) (err error) {
 	var lgr *logger
 	// 初始化全局变量
 	for _, opt := range opts {
-		lgr, err = newLogger(opt)
+		if lgr, err = newLogger(opt); err != nil {
+			return
+		}
 		if opt.Default {
 			Default = lgr
 		} else {

@@ -23,7 +23,7 @@ logger:
     # 日志名称
     alarm:
       level:
-      path:
+      path: stdout
       rotateBytes:
       rotateCycle:
       recordBufIdle:
