@@ -334,9 +334,9 @@ func rename(path string, yr int, mn time.Month, dy int, hr int, tmp []byte) erro
 		val /= 10
 	}
 
-	for idx >= 0 {
-		bd.WriteByte(tmp[idx])
+	for idx > 0 {
 		idx--
+		bd.WriteByte(tmp[idx])
 	}
 	npath := bd.String()
 	if fi, fe := os.Stat(npath); fi != nil || os.IsExist(fe) {
