@@ -247,12 +247,13 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 		idx--
 	}
 	buf.WriteByte(SPACE)
-	if ctx != nil { // add trace id if provide
-		if tid := ctx.Value(TRACEID); tid != nil {
-			buf.WriteString(tid.(string))
-			buf.WriteByte(SPACE)
-		}
-	}
+	// if ctx is custom context and ctx will not be nil
+	//if ctx != nil { // add trace id if provide
+	//	if tid := ctx.Value(TRACEID); tid != nil {
+	//		buf.WriteString(tid.(string))
+	//		buf.WriteByte(SPACE)
+	//	}
+	//}
 	buf.WriteByte(MINUS)
 	buf.WriteByte(SPACE)
 	// 写入msg
