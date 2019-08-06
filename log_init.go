@@ -11,7 +11,7 @@ func init() {
 
 	config, ok := conf.GetMap(CKEY)
 	if !ok {
-		Setup(DEF_FLUSH_PERIOD, &Option{
+		Setup(DEF_FLUSH_PERIOD, &Config{
 			Level:   DEBUG,
 			Path:    STDERR,
 			Default: true,
@@ -24,7 +24,7 @@ func init() {
 		flushPeriod = DEF_FLUSH_PERIOD
 	}
 
-	options := make([]*Option, 0, 4)
+	options := make([]*Config, 0, 4)
 
 	level, ok := conf.ElemString(config, "level")
 	if !ok {
@@ -52,7 +52,7 @@ func init() {
 		writerBufSize = DEF_WRITER_BUF_SIZE // 与glog相同
 	}
 
-	options = append(options, &Option{
+	options = append(options, &Config{
 		Name:          "",
 		Level:         GetLevel(level),
 		Path:          path,
@@ -93,7 +93,7 @@ func init() {
 				writerBufSize = DEF_WRITER_BUF_SIZE // 与glog相同
 			}
 
-			options = append(options, &Option{
+			options = append(options, &Config{
 				Name:          name,
 				Level:         GetLevel(level),
 				Path:          path,
