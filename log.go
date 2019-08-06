@@ -89,16 +89,16 @@ func Flush() {
 	}
 }
 
-type Option struct {
-	Name          string `json:"name"` // 日志名字
-	Level         Level  `json:"level"`
-	Path          string `json:"path"`
-	RotateBytes   int64  `json:"rotateBytes"`
-	RotateCycle   Cycle  `json:"rotateCycle"`   //轮转周期,目前仅支持
-	RecordBufIdle int    `json:"recordBufIdle"` // record buf的空闲数量
-	RecordBufSize int    `json:"recordBufSize"` // record buf的初始大小
-	WriterBufSize int    `json:"writerBufSize"` //Buffer写缓存大小
-	Default       bool   `json:"default"`       //是否默认
+type Config struct {
+	Name          string `json:"name" bson:"name" yaml:"name"` // 日志名字
+	Level         Level  `json:"level" bson:"level" yaml:"level"`
+	Path          string `json:"path" bson:"path" yaml:"path"`
+	RotateBytes   int64  `json:"rotateBytes" bson:"rotateBytes" yaml:"rotateBytes"`
+	RotateCycle   Cycle  `json:"rotateCycle" bson:"rotateCycle" yaml:"rotateCycle"`       //轮转周期,目前仅支持
+	RecordBufIdle int    `json:"recordBufIdle" bson:"recordBufIdle" yaml:"recordBufIdle"` // record buf的空闲数量
+	RecordBufSize int    `json:"recordBufSize" bson:"recordBufSize" yaml:"recordBufSize"` // record buf的初始大小
+	WriterBufSize int    `json:"writerBufSize" bson:"writerBufSize" yaml:"writerBufSize"` //Buffer写缓存大小
+	Default       bool   `json:"default" bson:"default" yaml:"default"`                   //是否默认
 }
 
 // call this on init method
@@ -123,7 +123,7 @@ func GetLog(name string) (l *logger) {
 	return nil
 }
 
-func Setup(flushPeriod time.Duration, opts ...*Option) (err error) {
+func Setup(flushPeriod time.Duration, opts ...*Config) (err error) {
 
 	if flushPeriod <= 0 {
 		flushPeriod = DEF_FLUSH_PERIOD
@@ -144,7 +144,7 @@ func Setup(flushPeriod time.Duration, opts ...*Option) (err error) {
 	var lgr *logger
 	// 初始化全局变量
 	for _, opt := range opts {
-		if lgr, err = newLogger(opt); err != nil {
+		if lgr, err = newLogger(mergeConfig(opt)); err != nil {
 			return
 		}
 		if opt.Default {
@@ -160,6 +160,17 @@ func Setup(flushPeriod time.Duration, opts ...*Option) (err error) {
 	// 启动定期刷新么台
 	go flushDaemon(flushPeriod)
 	return
+}
+
+func mergeConfig(c *Config) *Config {
+	if c.Path == "" {
+		c.Path = STDOUT
+	}
+	if c.RotateCycle == NONE {
+		c.RotateCycle = DAILY
+	}
+
+	return c
 }
 
 func (l *logger) Debug(ctx context.Context, format string, args ...interface{}) {
