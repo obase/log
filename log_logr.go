@@ -14,7 +14,7 @@ import (
 )
 
 type logger struct {
-	*Option
+	*Config
 	*sync.Mutex
 	*os.File
 	*bufio.Writer
@@ -27,7 +27,7 @@ type logger struct {
 	hr int        // 当前小时, 用于轮转
 }
 
-func newLogger(opt *Option) (ret *logger, err error) {
+func newLogger(opt *Config) (ret *logger, err error) {
 
 	// 先判断文件是否存在, 如果存在则判断是否需要轮转
 	var file *os.File
@@ -97,7 +97,7 @@ func newLogger(opt *Option) (ret *logger, err error) {
 	}
 
 	ret = &logger{
-		Option:         opt,
+		Config:         opt,
 		Mutex:          new(sync.Mutex),
 		File:           file,
 		Writer:         bufio.NewWriterSize(file, opt.WriterBufSize),
