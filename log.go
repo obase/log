@@ -2,7 +2,8 @@ package log
 
 import (
 	"context"
-	"math/rand"
+	"fmt"
+	"os"
 	"strings"
 	"time"
 )
@@ -49,46 +50,6 @@ const (
 var desc [6]string = [6]string{"[D]", "[I]", "[W]", "[E]", "[F]", "[O]"}
 var hexs [16]byte = [16]byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
 
-func Debug(ctx context.Context, format string, args ...interface{}) {
-	if Default.Level <= DEBUG {
-		Default.printf(2, DEBUG, ctx, format, args...)
-	}
-}
-
-func Info(ctx context.Context, format string, args ...interface{}) {
-	if Default.Level <= INFO {
-		Default.printf(2, INFO, ctx, format, args...)
-	}
-}
-
-func Warn(ctx context.Context, format string, args ...interface{}) {
-	if Default.Level <= WARN {
-		Default.printf(2, WARN, ctx, format, args...)
-	}
-}
-
-func Error(ctx context.Context, format string, args ...interface{}) {
-	if Default.Level <= ERROR {
-		Default.printf(2, ERROR, ctx, format, args...)
-	}
-}
-
-func Fatal(ctx context.Context, format string, args ...interface{}) {
-	if Default.Level <= FATAL {
-		Default.printf(2, FATAL, ctx, format, args...)
-	}
-}
-
-// call when program exit
-func Flush() {
-	if Default != nil {
-		Default.Flush()
-	}
-	for _, v := range Others {
-		v.Flush()
-	}
-}
-
 type Config struct {
 	Name          string `json:"name" bson:"name" yaml:"name"` // 日志名字
 	Level         Level  `json:"level" bson:"level" yaml:"level"`
@@ -103,21 +64,26 @@ type Config struct {
 
 // call this on init method
 func flushDaemon(flushPeriod time.Duration) {
+	defer func() {
+		if perr := recover(); perr != nil {
+			fmt.Fprint(os.Stderr, "log flushDaemon error: %v", perr)
+		}
+	}()
 	for _ = range time.NewTicker(flushPeriod).C {
-		Default.Flush()
-		for _, v := range Others {
+		_default.Flush()
+		for _, v := range _loggers {
 			v.Flush()
 		}
 	}
 }
 
 var (
-	Default *logger
-	Others  map[string]*logger = make(map[string]*logger)
+	_default *logger
+	_loggers map[string]*logger = make(map[string]*logger)
 )
 
 func GetLog(name string) (l *logger) {
-	if rt, ok := Others[name]; ok {
+	if rt, ok := _loggers[name]; ok {
 		return rt
 	}
 	return nil
@@ -132,10 +98,10 @@ func Setup(flushPeriod time.Duration, opts ...*Config) (err error) {
 	// 如果错误,需要关闭相应的文件句柄
 	defer func() {
 		if err != nil {
-			if Default != nil {
-				Default.File.Close()
+			if _default != nil {
+				_default.File.Close()
 			}
-			for _, v := range Others {
+			for _, v := range _loggers {
 				v.File.Close()
 			}
 		}
@@ -148,12 +114,10 @@ func Setup(flushPeriod time.Duration, opts ...*Config) (err error) {
 			return
 		}
 		if opt.Default {
-			Default = lgr
+			_default = lgr
 		} else {
 			for _, k := range strings.Split(opt.Name, ",") {
-				if k = strings.TrimSpace(k); len(k) > 0 {
-					Others[k] = lgr
-				}
+				_loggers[k] = lgr
 			}
 		}
 	}
@@ -201,26 +165,4 @@ func (l *logger) Fatal(ctx context.Context, format string, args ...interface{}) 
 	if l.Level <= FATAL {
 		l.printf(2, FATAL, ctx, format, args...)
 	}
-}
-
-// 使用时间做seed确保每次的序列不同
-var zrand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
-func RandTraceId() string {
-
-	bs := make([]byte, 20)
-
-	rd := zrand.Uint64()
-	for i := 19; i >= 4; i-- {
-		bs[i] = hexs[rd&0x0f]
-		rd >>= 4
-	}
-
-	ts := time.Now().UnixNano()
-	for i := 3; i >= 0; i-- {
-		bs[i] = hexs[ts&0x0f]
-		ts >>= 4
-	}
-
-	return string(bs)
 }

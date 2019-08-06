@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var ctx Context = WithValue(TODO(), TRACEID, RandTraceId())
+var ctx Context = WithValue(TODO(), TRACEID, "aaaa")
 
 func TestZlogPerf(t *testing.T) {
 	defer Flush()
