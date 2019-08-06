@@ -91,11 +91,7 @@ func GetLog(name string) (l *logger) {
 
 func Setup(flushPeriod time.Duration, opts ...*Config) (err error) {
 
-	if flushPeriod <= 0 {
-		flushPeriod = DEF_FLUSH_PERIOD
-	}
-
-	// 如果错误,需要关闭相应的文件句柄
+	// 如果错误,需要关闭相应的文件句柄. 否则重置全局的函数变量
 	defer func() {
 		if err != nil {
 			if _default != nil {
@@ -104,8 +100,19 @@ func Setup(flushPeriod time.Duration, opts ...*Config) (err error) {
 			for _, v := range _loggers {
 				v.File.Close()
 			}
+		} else if _default != nil {
+			// 设置def里面函数变量
+			Fatal = _default.Fatal
+			Error = _default.Error
+			Warn = _default.Warn
+			Info = _default.Info
+			Debug = _default.Debug
 		}
 	}()
+
+	if flushPeriod <= 0 {
+		flushPeriod = DEF_FLUSH_PERIOD
+	}
 
 	var lgr *logger
 	// 初始化全局变量
@@ -121,6 +128,7 @@ func Setup(flushPeriod time.Duration, opts ...*Config) (err error) {
 			}
 		}
 	}
+
 	// 启动定期刷新么台
 	go flushDaemon(flushPeriod)
 	return

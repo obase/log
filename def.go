@@ -5,11 +5,11 @@ import (
 )
 
 /*日志适配方法*/
-var Fatal func(ctx context.Context, format string, args ...interface{}) = _default.Fatal
-var Error func(ctx context.Context, format string, args ...interface{}) = _default.Error
-var Warn func(ctx context.Context, format string, args ...interface{}) = _default.Warn
-var Info func(ctx context.Context, format string, args ...interface{}) = _default.Info
-var Debug func(ctx context.Context, format string, args ...interface{}) = _default.Debug
+var Fatal func(ctx context.Context, format string, args ...interface{})
+var Error func(ctx context.Context, format string, args ...interface{})
+var Warn func(ctx context.Context, format string, args ...interface{})
+var Info func(ctx context.Context, format string, args ...interface{})
+var Debug func(ctx context.Context, format string, args ...interface{})
 var Flush func() = func() {
 	if _default != nil {
 		_default.Flush()
