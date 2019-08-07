@@ -107,11 +107,12 @@ func Setup(flushPeriod time.Duration, opts ...*Config) (err error) {
 			Warn = _default.Warn
 			Info = _default.Info
 			Debug = _default.Debug
-
+			// 兼容旧版本
 			Fatalf = _default.Fatal
 			Errorf = _default.Error
 			Warnf = _default.Warn
 			Infof = _default.Info
+			Inforf = _default.Info
 			Debugf = _default.Debug
 		}
 	}()
