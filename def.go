@@ -37,3 +37,6 @@ var Inforf func(ctx context.Context, format string, args ...interface{}) = Info
 
 // Deprecated: please use Debug instead
 var Debugf func(ctx context.Context, format string, args ...interface{}) = Debug
+
+// Deprecated: please use Flush instead
+var Flushf func() = Flush
