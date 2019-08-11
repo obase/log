@@ -2,16 +2,31 @@ package log
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 )
 
 func TestGetLog(t *testing.T) {
-	for {
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
-		Info(nil, "this is a test")
-		Flush()
-		time.Sleep(10 * time.Second)
-	}
+	defer Flush()
+	paral := 100
+	times := 100 * 10000
+	start := time.Now().UnixNano()
+	testInfo(paral, times)
+	end := time.Now().UnixNano()
+	fmt.Println("used (ms):", (end-start)/1000000)
+}
 
+func testInfo(paral int, times int) {
+	wg := sync.WaitGroup{}
+	for j := 0; j < paral; j++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < times; i++ {
+				Info(nil, "this is a test, j=%v, i=%v", j, i)
+			}
+		}()
+	}
+	wg.Wait()
 }

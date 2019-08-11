@@ -136,6 +136,7 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 
 	// 获取BuffNode已经带锁, 不需要放在l.mutx范围
 	buf := lg.Pool.Get().(*Buffer)
+	buf.Reset()
 
 	// 生成当前时间点
 	now := time.Now()
