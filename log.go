@@ -69,7 +69,7 @@ func flushDaemon(flushPeriod time.Duration) {
 			fmt.Fprintf(os.Stderr, "log flushDaemon error: %v\n", perr)
 		}
 	}()
-	for _ = range time.NewTicker(flushPeriod).C {
+	for _ = range time.Tick(flushPeriod) {
 		_default.Flush()
 		for _, v := range _loggers {
 			v.Flush()

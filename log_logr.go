@@ -47,12 +47,12 @@ func newLogger(opt *Config) (ret *logger, err error) {
 	} else if opt.Path == STDERR {
 		file = os.Stderr
 	} else {
-		if fi, fe := os.Stat(opt.Path); fi != nil || os.IsExist(fe) {
+		if fi, _ := os.Stat(opt.Path); fi != nil {
 
 			size = fi.Size()
-			buf := make([]byte, DEF_RECORD_HEADER_BYTES)
+			header := make([]byte, DEF_RECORD_HEADER_BYTES)
 			if opt.RotateBytes > 0 && size >= opt.RotateBytes {
-				if err = rename(opt.Path, yr, mn, dy, hr, buf); err != nil {
+				if err = rename(opt.Path, yr, mn, dy, hr, header); err != nil {
 					return
 				}
 			} else if opt.RotateCycle != NONE {
@@ -60,29 +60,28 @@ func newLogger(opt *Config) (ret *logger, err error) {
 				mtime := fi.ModTime()
 				myr, mmn, mdy := mtime.Date()
 				mhr, _, _ := mtime.Clock()
-
 				switch opt.RotateCycle {
-				case YEARLY:
-					if myr != yr {
-						if err = rename(opt.Path, yr, mn, dy, hr, buf); err != nil {
-							return
-						}
-					}
-				case MONTHLY:
-					if myr != yr || mmn != mn {
-						if err = rename(opt.Path, yr, mn, dy, hr, buf); err != nil {
+				case HOURLY:
+					if myr != yr || mmn != mn || mdy != dy || mhr != hr {
+						if err = rename(opt.Path, yr, mn, dy, hr, header); err != nil {
 							return
 						}
 					}
 				case DAILY:
 					if myr != yr || mmn != mn || mdy != dy {
-						if err = rename(opt.Path, yr, mn, dy, hr, buf); err != nil {
+						if err = rename(opt.Path, yr, mn, dy, hr, header); err != nil {
 							return
 						}
 					}
-				case HOURLY:
-					if myr != yr || mmn != mn || mdy != dy || mhr != hr {
-						if err = rename(opt.Path, yr, mn, dy, hr, buf); err != nil {
+				case MONTHLY:
+					if myr != yr || mmn != mn {
+						if err = rename(opt.Path, yr, mn, dy, hr, header); err != nil {
+							return
+						}
+					}
+				case YEARLY:
+					if myr != yr {
+						if err = rename(opt.Path, yr, mn, dy, hr, header); err != nil {
 							return
 						}
 					}
@@ -90,7 +89,7 @@ func newLogger(opt *Config) (ret *logger, err error) {
 			}
 		} else {
 			dir := filepath.Dir(opt.Path)
-			if di, de := os.Stat(dir); di == nil && os.IsNotExist(de) {
+			if di, _ := os.Stat(dir); di == nil {
 				if err = os.MkdirAll(dir, os.ModePerm); err != nil {
 					return
 				}
@@ -245,18 +244,7 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 	buf.WriteByte(COLON)
 
 	// 写入line,参考glog做法
-	idx = 0
-	for {
-		buf.Header[idx] = hexs[line%10]
-		if line /= 10; line <= 0 {
-			break
-		}
-		idx++
-	}
-	for idx >= 0 {
-		buf.WriteByte(buf.Header[idx])
-		idx--
-	}
+	buf.WriteString(strconv.Itoa(line))
 	buf.WriteByte(SPACE)
 	// if ctx is custom context and ctx will not be nil
 	//if ctx != nil { // add trace id if provide

@@ -21,22 +21,22 @@ var Flush func() = func() {
 
 /*兼容旧的API*/
 // Deprecated: please use Fatal instead
-var Fatalf func(ctx context.Context, format string, args ...interface{}) = Fatal
+var Fatalf func(ctx context.Context, format string, args ...interface{})
 
 // Deprecated: please use Error instead
-var Errorf func(ctx context.Context, format string, args ...interface{}) = Error
+var Errorf func(ctx context.Context, format string, args ...interface{})
 
 // Deprecated: please use Warn instead
-var Warnf func(ctx context.Context, format string, args ...interface{}) = Warn
+var Warnf func(ctx context.Context, format string, args ...interface{})
 
 // Deprecated: please use Info instead
-var Infof func(ctx context.Context, format string, args ...interface{}) = Info
+var Infof func(ctx context.Context, format string, args ...interface{})
 
 // Deprecated: please use Info instead
-var Inforf func(ctx context.Context, format string, args ...interface{}) = Info
+var Inforf func(ctx context.Context, format string, args ...interface{})
 
 // Deprecated: please use Debug instead
-var Debugf func(ctx context.Context, format string, args ...interface{}) = Debug
+var Debugf func(ctx context.Context, format string, args ...interface{})
 
 // Deprecated: please use Flush instead
 var Flushf func() = Flush
