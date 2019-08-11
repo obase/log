@@ -13,12 +13,17 @@ import (
 	"time"
 )
 
+type Buffer struct {
+	strings.Builder
+	Header []byte
+}
+
 type logger struct {
 	*Config
 	*sync.Mutex
 	*os.File
 	*bufio.Writer
-	*RecordBuffPool
+	*sync.Pool
 
 	bs int64      // 已经写入字节数,用于轮转
 	yr int        // 当前年份, 用于轮转
@@ -97,12 +102,17 @@ func newLogger(opt *Config) (ret *logger, err error) {
 	}
 
 	ret = &logger{
-		Config:         opt,
-		Mutex:          new(sync.Mutex),
-		File:           file,
-		Writer:         bufio.NewWriterSize(file, opt.WriterBufSize),
-		RecordBuffPool: NewBuffPool(opt.RecordBufIdle, opt.RecordBufSize),
-
+		Config: opt,
+		Mutex:  new(sync.Mutex),
+		File:   file,
+		Writer: bufio.NewWriterSize(file, opt.WriterBufSize),
+		Pool: &sync.Pool{
+			New: func() interface{} {
+				return &Buffer{
+					Header: make([]byte, DEF_RECORD_HEADER_BYTES),
+				}
+			},
+		},
 		bs: size,
 		yr: yr,
 		mn: mn,
@@ -125,7 +135,8 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 	}
 
 	// 获取BuffNode已经带锁, 不需要放在l.mutx范围
-	buf := lg.RecordBuffPool.Get()
+	buf := lg.Pool.Get().(*Buffer)
+	buf.Reset()
 
 	// 生成当前时间点
 	now := time.Now()
@@ -138,92 +149,92 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 
 	// 3个毫秒字符
 	val = ms
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
 
 	// 1个点字符
-	buf.Tmp[idx] = '.'
+	buf.Header[idx] = '.'
 	idx++
 	// 2个秒字符
 	val = sc
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
 
 	// 1个冒号
-	buf.Tmp[idx] = ':'
+	buf.Header[idx] = ':'
 	idx++
 	// 2个分字符
 	val = mi
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
 	// 1个冒号
-	buf.Tmp[idx] = ':'
+	buf.Header[idx] = ':'
 	idx++
 	// 2个时字符
 	val = hr
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
 	// 1个空白
-	buf.Tmp[idx] = SPACE
+	buf.Header[idx] = SPACE
 	idx++
 	// 2个天字符
 	val = dy
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
 	// 1个中横线
-	buf.Tmp[idx] = '-'
+	buf.Header[idx] = '-'
 	idx++
 	// 2个月字符
 	val = int(mn)
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
 
 	// 1个中横线
-	buf.Tmp[idx] = '-'
+	buf.Header[idx] = '-'
 	idx++
 	// 4个年字符
 	val = yr
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 	idx++
 	val /= 10
-	buf.Tmp[idx] = hexs[val%10]
+	buf.Header[idx] = hexs[val%10]
 
 	// 写入buff
 	for idx >= 0 {
-		buf.WriteByte(buf.Tmp[idx])
+		buf.WriteByte(buf.Header[idx])
 		idx--
 	}
 	buf.WriteByte(SPACE)
@@ -236,14 +247,14 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 	// 写入line,参考glog做法
 	idx = 0
 	for {
-		buf.Tmp[idx] = hexs[line%10]
+		buf.Header[idx] = hexs[line%10]
 		if line /= 10; line <= 0 {
 			break
 		}
 		idx++
 	}
 	for idx >= 0 {
-		buf.WriteByte(buf.Tmp[idx])
+		buf.WriteByte(buf.Header[idx])
 		idx--
 	}
 	buf.WriteByte(SPACE)
@@ -259,7 +270,7 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 	// 写入msg
 	fmt.Fprintf(buf, format, args...)
 	if format[len(format)-1] != CRLF {
-		buf.Buffer.WriteByte(CRLF)
+		buf.WriteByte(CRLF)
 	}
 	// 写到文件
 	ln := buf.Len()
@@ -272,19 +283,19 @@ func (lg *logger) printf(depth int, lvl Level, ctx context.Context, format strin
 		lg.Writer.Flush()
 		if lg.File != os.Stdout && lg.File != os.Stderr {
 			lg.File.Close()
-			rename(lg.Path, lg.yr, lg.mn, lg.dy, lg.hr, buf.Tmp)
+			rename(lg.Path, lg.yr, lg.mn, lg.dy, lg.hr, buf.Header)
 			lg.File, _ = os.OpenFile(lg.Path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 			lg.Writer = bufio.NewWriter(lg.File)
 		}
 		lg.yr, lg.mn, lg.dy, lg.hr = yr, mn, dy, hr
 		lg.bs = 0
 	}
-	lg.Writer.ReadFrom(buf)
+	lg.Writer.WriteString(buf.String())
 	lg.bs += int64(ln)
 	lg.Mutex.Unlock()
 
 	// 归还buffer. 由于底层共用, 未写完之前不能归还
-	lg.RecordBuffPool.Put(buf)
+	lg.Pool.Put(buf)
 }
 
 func (lg *logger) Flush() {
