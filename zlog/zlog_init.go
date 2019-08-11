@@ -1,4 +1,4 @@
-package log
+package zlog
 
 import (
 	"github.com/obase/conf"
@@ -8,7 +8,6 @@ import (
 const CKEY = "logger"
 
 func init() {
-
 	config, ok := conf.GetMap(CKEY)
 	if !ok {
 		Setup(DEF_FLUSH_PERIOD, &Config{
@@ -39,29 +38,19 @@ func init() {
 	if !ok {
 		rotateCycle = "DAILY"
 	}
-	recordBufIdle, ok := conf.ElemInt(config, "recordBufIdle")
+	bufioWriterSize, ok := conf.ElemInt(config, "bufioWriterSize")
 	if !ok {
-		recordBufIdle = DEF_RECORD_BUF_IDLE //与glog相同
-	}
-	recordBufSize, ok := conf.ElemInt(config, "recordBufSize")
-	if !ok {
-		recordBufSize = DEF_RECORD_BUF_SIZE //与glog相同
-	}
-	writerBufSize, ok := conf.ElemInt(config, "writerBufSize")
-	if !ok {
-		writerBufSize = DEF_WRITER_BUF_SIZE // 与glog相同
+		bufioWriterSize = DEF_BUFIO_WRITER_SIZE // 与glog相同
 	}
 
 	options = append(options, &Config{
-		Name:          "",
-		Level:         GetLevel(level),
-		Path:          path,
-		RotateBytes:   int64(rotateBytes),
-		RotateCycle:   GetCycle(rotateCycle),
-		RecordBufIdle: recordBufIdle,
-		RecordBufSize: recordBufSize,
-		WriterBufSize: writerBufSize,
-		Default:       true,
+		Name:            "",
+		Level:           GetLevel(level),
+		Path:            path,
+		RotateBytes:     int64(rotateBytes),
+		RotateCycle:     GetCycle(rotateCycle),
+		BufioWriterSize: bufioWriterSize,
+		Default:         true,
 	})
 
 	exts, ok := conf.ElemMap(config, "exts")
@@ -80,29 +69,19 @@ func init() {
 			if !ok {
 				rotateCycle = "DAILY"
 			}
-			recordBufIdle, ok := conf.ElemInt(config, "recordBufIdle")
+			bufioWriterSize, ok := conf.ElemInt(config, "bufioWriterSize")
 			if !ok {
-				recordBufIdle = DEF_RECORD_BUF_IDLE //与glog相同
-			}
-			recordBufSize, ok := conf.ElemInt(config, "recordBufSize")
-			if !ok {
-				recordBufSize = DEF_RECORD_BUF_SIZE //与glog相同
-			}
-			writerBufSize, ok := conf.ElemInt(config, "writerBufSize")
-			if !ok {
-				writerBufSize = DEF_WRITER_BUF_SIZE // 与glog相同
+				bufioWriterSize = DEF_BUFIO_WRITER_SIZE // 与glog相同
 			}
 
 			options = append(options, &Config{
-				Name:          name,
-				Level:         GetLevel(level),
-				Path:          path,
-				RotateBytes:   int64(rotateBytes),
-				RotateCycle:   GetCycle(rotateCycle),
-				RecordBufIdle: recordBufIdle,
-				RecordBufSize: recordBufSize,
-				WriterBufSize: writerBufSize,
-				Default:       false,
+				Name:            name,
+				Level:           GetLevel(level),
+				Path:            path,
+				RotateBytes:     int64(rotateBytes),
+				RotateCycle:     GetCycle(rotateCycle),
+				BufioWriterSize: bufioWriterSize,
+				Default:         false,
 			})
 		}
 	}
@@ -138,4 +117,14 @@ func GetCycle(val string) Cycle {
 		return HOURLY
 	}
 	return DAILY
+}
+
+func mergeConfig(c *Config) *Config {
+	if c == nil {
+		c = new(Config)
+	}
+	if c.BufioWriterSize <= 0 {
+		c.BufioWriterSize = DEF_BUFIO_WRITER_SIZE
+	}
+	return c
 }
