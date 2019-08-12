@@ -60,7 +60,7 @@ func init() {
 	}
 
 	// 初始化全局定义
-	Debug, Info, Warn, Error, Fatal, Flush = _default.Debug, _default.Info, _default.Warn, _default.Error, _default.Fatal, FlushAll
+	Debug, Info, Warn, Error, ErrorStack, Fatal, Flush = _default.Debug, _default.Info, _default.Warn, _default.Error, _default.ErrorStack, _default.Fatal, FlushAll
 	Debugf, Infof, Warnf, Errorf, Fatalf, Flushf = _default.Debug, _default.Info, _default.Warn, _default.Error, _default.Fatal, FlushAll
 	Inforf = _default.Info
 }

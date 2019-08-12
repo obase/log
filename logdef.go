@@ -6,12 +6,13 @@ import (
 
 // 中间定义,可以覆盖
 var (
-	Debug func(ctx context.Context, format string, args ...interface{})
-	Info  func(ctx context.Context, format string, args ...interface{})
-	Warn  func(ctx context.Context, format string, args ...interface{})
-	Error func(ctx context.Context, format string, args ...interface{})
-	Fatal func(ctx context.Context, format string, args ...interface{})
-	Flush func()
+	Debug      func(ctx context.Context, format string, args ...interface{})
+	Info       func(ctx context.Context, format string, args ...interface{})
+	Warn       func(ctx context.Context, format string, args ...interface{})
+	Error      func(ctx context.Context, format string, args ...interface{})
+	Fatal      func(ctx context.Context, format string, args ...interface{})
+	ErrorStack func(ctx context.Context, err error, all bool)
+	Flush      func()
 )
 
 // 历史API
