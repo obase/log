@@ -16,23 +16,17 @@ go mod edit -require=github.com/obase/log@latest
 # 系统日志设置
 logger:
   # 统一刷新间隔(可选), 包括默认以及exts配置的其他日志. 默认30s.
-  flushPeriod: "5s"
-
+  flushPeriod: "10s"
   # 日志级别(必需), DEBUG, INFO, ERROR, FATAL, OFF
   level: "DEBUG"
   # 日志路径(必需), stdout表示标准输出, stderr表示标准错误
-  path: "log/xxx.log"
+  path: "/data/logs/xxx.log"
   # 轮转字节(byte)数, 默认为0表示不启用.
-  rotateBytes: 10240000
+  #rotateBytes: 10240000
   # 轮转周期(可选), 目前支持yearly, monthly, daily, hourly
-  rotateCycle: "daily"
-  # 记录缓存池空闲(可选), 默认256
-  recordBufIdle: 256
-  # 记录缓存区大小(可选), 默认1024字节
-  recordBufSize: 1024
+  rotateCycle: "hourly"
   # 缓冲区大小(可选), 默认256K
-  writerBufSize: 262144
-
+  bufioWriterSize: 262144
   # 其他日志. 通过key引用保存到不同的日志文件, 例如预警,追踪等场合
   exts:
     # 日志名称
@@ -41,9 +35,8 @@ logger:
       path: stdout
       rotateBytes:
       rotateCycle:
-      recordBufIdle:
-      recordBufSize:
-      writerBufSize
+      bufioWriterSize:
+
 ```
 
 # Index
@@ -94,15 +87,13 @@ const (
 type Level uint8
 type Cycle uint8
 type Config struct {
-	Name          string `json:"name" bson:"name" yaml:"name"` // 日志名字
-	Level         Level  `json:"level" bson:"level" yaml:"level"`
-	Path          string `json:"path" bson:"path" yaml:"path"`
-	RotateBytes   int64  `json:"rotateBytes" bson:"rotateBytes" yaml:"rotateBytes"`
-	RotateCycle   Cycle  `json:"rotateCycle" bson:"rotateCycle" yaml:"rotateCycle"`       //轮转周期,目前仅支持
-	RecordBufIdle int    `json:"recordBufIdle" bson:"recordBufIdle" yaml:"recordBufIdle"` // record buf的空闲数量
-	RecordBufSize int    `json:"recordBufSize" bson:"recordBufSize" yaml:"recordBufSize"` // record buf的初始大小
-	WriterBufSize int    `json:"writerBufSize" bson:"writerBufSize" yaml:"writerBufSize"` //Buffer写缓存大小
-	Default       bool   `json:"default" bson:"default" yaml:"default"`                   //是否默认
+	Name            string // 日志名字
+	Level           Level
+	Path            string
+	RotateBytes     int64
+	RotateCycle     Cycle //轮转周期,目前仅支持
+	BufioWriterSize int   //Buffer写缓存大小
+	Default         bool  //是否默认
 }
 
 ```
@@ -136,17 +127,56 @@ var Flush func()
 ```
 # Examples
 ```
-func TestZlogPerf(t *testing.T) {
+package log
+
+import (
+	"fmt"
+	//"github.com/golang/glog"
+	"sync"
+	"testing"
+	"time"
+)
+
+func TestGetLog(t *testing.T) {
+	//defer glog.Flush()
 	defer Flush()
-	start := time.Now()
-	//for i := 0; i < 1; i++ {
-	Debug(ctx, "this is Debug on %v\n", time.Now())
-	//	Info(ctx, "this is Info on %v", time.Now())
-	//	Warn(ctx, "this is Warn on %v", time.Now())
-	//	Error(ctx, "this is Error on %v\n", time.Now())
-	//	Fatal(ctx, "this is Fatal on %v", time.Now())
-	//}
-	end := time.Now()
-	fmt.Println("used: ", end.Sub(start).Nanoseconds())
+	//flag.Set("log_dir", `E:\data\logs`)
+	//flag.Parse()
+	paral := 100
+	times := 100 * 10000
+	start := time.Now().UnixNano()
+	testInfo(paral, times)
+	end := time.Now().UnixNano()
+	fmt.Println("used (ms):", (end-start)/1000000)
 }
+
+func testInfo(paral int, times int) {
+	wg := sync.WaitGroup{}
+	for j := 0; j < paral; j++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < times; i++ {
+				Info(nil, "this is a test, j=%v, i=%v", j, i)
+				//glog.Infof("this is a test, j=%v, i=%v", j, i)
+			}
+		}()
+	}
+	wg.Wait()
+}
+
+/*
+
+与glog的性能对比:
+glog
+used (ms): 62551
+used (ms): 59141
+used (ms): 65945
+
+zlog:
+used (ms): 33264
+used (ms): 32110
+used (ms): 41861
+*/
+
 ```
