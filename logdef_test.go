@@ -1,15 +1,24 @@
 package log
 
 import (
-	"errors"
+	"fmt"
 	//"github.com/golang/glog"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestGetLog(t *testing.T) {
-	err := errors.New("this is a test")
-	ErrorStack(nil, err, false)
+	//defer glog.Flush()
+	defer Flush()
+	//flag.Set("log_dir", `E:\data\logs`)
+	//flag.Parse()
+	paral := 100
+	times := 100 * 10000
+	start := time.Now().UnixNano()
+	testInfo(paral, times)
+	end := time.Now().UnixNano()
+	fmt.Println("used (ms):", (end-start)/1000000)
 }
 
 func testInfo(paral int, times int) {
