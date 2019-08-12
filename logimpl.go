@@ -196,6 +196,10 @@ var (
 	_loggers map[string]*Logger
 )
 
+func GetLog(key string) *Logger {
+	return _loggers[key]
+}
+
 func Setup(flushPeriod time.Duration, configs ...*Config) (err error) {
 
 	// 初始化全局变量
