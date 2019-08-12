@@ -17,9 +17,6 @@ func init() {
 		})
 	} else {
 		flushPeriod, ok := conf.ElemDuration(config, "flushPeriod")
-		if !ok {
-			flushPeriod = DEF_FLUSH_PERIOD
-		}
 
 		options := make([]*Config, 0, 4)
 

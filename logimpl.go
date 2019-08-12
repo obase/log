@@ -193,7 +193,7 @@ func (l *Logger) Flush() {
 
 var (
 	_default *Logger
-	_loggers map[string]*Logger
+	_loggers map[string]*Logger = make(map[string]*Logger)
 )
 
 func GetLog(key string) *Logger {
