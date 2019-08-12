@@ -116,7 +116,7 @@ func rename(path string, year int, month time.Month, day int, hour int) error {
 	buf.Header[7] = MINUS
 	buf.Header[6], buf.Header[5] = hexs[month%10], hexs[month/10%10]
 	buf.Header[4] = MINUS
-	buf.Header[3], buf.Header[2], buf.Header[1], buf.Header[0] = hexs[month%10], hexs[month/10%10], hexs[month/100%10], hexs[month/1000%10]
+	buf.Header[3], buf.Header[2], buf.Header[1], buf.Header[0] = hexs[year%10], hexs[year/10%10], hexs[year/100%10], hexs[year/1000%10]
 
 	buf.Write(buf.Header[:13])
 	npath := buf.String()
