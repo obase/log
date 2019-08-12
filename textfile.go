@@ -123,7 +123,7 @@ func rename(path string, year int, month time.Month, day int, hour int) error {
 	recordSyncPool.Put(buf)
 
 	nsize := len(npath)
-	for i := 1; i < 256; i++ {
+	for i := 1; i < 65535; i++ {
 		if info, _ := os.Stat(npath); info != nil {
 			npath = npath[:nsize] + "." + strconv.Itoa(i)
 		} else {
@@ -134,8 +134,8 @@ func rename(path string, year int, month time.Month, day int, hour int) error {
 }
 
 func (w *TextfileWriter) Write(r *Record) {
-	size := int64(r.Len())
 
+	size := int64(r.Len())
 	rotated := false
 	if w.Config.RotateBytes > 0 && w.Config.RotateBytes < w.Size+size {
 		rotated = true
@@ -162,6 +162,7 @@ func (w *TextfileWriter) Write(r *Record) {
 		w.Year, w.Month, w.Day, w.Hour, w.Size = r.Year, r.Month, r.Day, r.Hour, 0
 	}
 	w.Writer.Write(r.Bytes())
+	w.Size += size
 }
 
 func (w *TextfileWriter) Flush() {
