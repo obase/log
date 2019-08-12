@@ -33,7 +33,9 @@ func NewTextfileWriter(c *Config) (Writer, error) {
 	)
 
 	if info, err = os.Stat(c.Path); err != nil {
-		return nil, err
+		if !os.IsNotExist(err) && !os.IsExist(err) {
+			return nil, err
+		}
 	}
 
 	now := time.Now()
@@ -43,7 +45,9 @@ func NewTextfileWriter(c *Config) (Writer, error) {
 	if info == nil {
 		dir := filepath.Dir(c.Path)
 		if info, err = os.Stat(dir); err != nil {
-			return nil, err
+			if !os.IsNotExist(err) && !os.IsExist(err) {
+				return nil, err
+			}
 		}
 		if info == nil {
 			if err = os.MkdirAll(dir, os.ModePerm); err != nil {
