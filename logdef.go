@@ -11,7 +11,7 @@ var (
 	Warn       func(ctx context.Context, format string, args ...interface{})
 	Error      func(ctx context.Context, format string, args ...interface{})
 	Fatal      func(ctx context.Context, format string, args ...interface{})
-	ErrorStack func(ctx context.Context, err error, all bool)
+	ErrorStack func(ctx context.Context, err interface{} , all bool)
 	Flush      func()
 )
 

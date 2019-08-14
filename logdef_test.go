@@ -8,12 +8,16 @@ import (
 	"time"
 )
 
-func TestGetLog(t *testing.T) {
+func TestLogger(t *testing.T) {
+	ErrorStack(nil, "this is a error", false)
+}
+
+func _TestGetLog(t *testing.T) {
 	//defer glog.Flush()
 	defer Flush()
 	//flag.Set("log_dir", `E:\data\logs`)
 	//flag.Parse()
-	paral := 100
+	paral := 1
 	times := 100 * 10000
 	start := time.Now().UnixNano()
 	testInfo(paral, times)

@@ -200,7 +200,7 @@ func stacks(all bool) []byte {
 	return trace
 }
 
-func (l *Logger) ErrorStack(ctx context.Context, err error, all bool) {
+func (l *Logger) ErrorStack(ctx context.Context, err interface{}, all bool) {
 	if l.Level <= ERROR {
 		l.log(ERROR, "%v\n%s", []interface{}{err, stacks(all)})
 	}

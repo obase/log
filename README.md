@@ -109,6 +109,12 @@ var Fatal func(ctx context.Context, format string, args ...interface{})
 ```
 var Error func(ctx context.Context, format string, args ...interface{})
 ```
+- func ErrorStack
+```
+var ErrorStack func(ctx context.Context, err error, all bool)
+```
+打印错误及堆栈信息
+
 - func Warn
 ```
 var Warn func(ctx context.Context, format string, args ...interface{})
@@ -179,4 +185,27 @@ used (ms): 32110
 used (ms): 41861
 */
 
+```
+ErrorStack
+```
+func TestLogger(t *testing.T) {
+	ErrorStack(nil, "this is a error", false)
+}
+
+/*
+
+2019-08-14 16:53:56.251 [E] logdef_test.go:12 this is a error
+goroutine 6 [running]:
+github.com/obase/log.stacks(0x69d900, 0x1d, 0x539, 0x45a100)
+        E:/baseworkspace/src/github.com/obase/log/logimpl.go:194 +0xb8
+github.com/obase/log.(*Logger).ErrorStack(0xc0000046e0, 0x0, 0x0, 0x555260, 0x5b9dc0, 0x4cdc00)
+        E:/baseworkspace/src/github.com/obase/log/logimpl.go:205 +0x4d
+github.com/obase/log.TestLogger(0xc0000a6200)
+        E:/baseworkspace/src/github.com/obase/log/logdef_test.go:12 +0x54
+testing.tRunner(0xc0000a6200, 0x599758)
+        C:/Go/src/testing/testing.go:865 +0xc7
+created by testing.(*T).Run
+        C:/Go/src/testing/testing.go:916 +0x361
+
+*/
 ```
