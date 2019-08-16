@@ -20,7 +20,7 @@ const (
 	WARN
 	ERROR
 	FATAL
-	OFF //不输出任何日志
+	OFF  //不输出任何日志
 )
 
 const (
@@ -117,6 +117,8 @@ func (r *Record) Format(level Level, format string, args []interface{}) {
 		line /= 10
 	}
 	r.Write(r.Header[idx:10])
+	r.WriteByte(SPACE)
+	r.WriteByte(MINUS)
 	r.WriteByte(SPACE)
 
 	fmt.Fprintf(r, format, args...)
