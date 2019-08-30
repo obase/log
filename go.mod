@@ -2,4 +2,4 @@ module github.com/obase/log
 
 go 1.12
 
-require github.com/obase/conf v1.5.0
+require github.com/obase/conf v1.5.1
