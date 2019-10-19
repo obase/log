@@ -69,11 +69,29 @@ type Record struct {
 	Hour   int
 }
 
-func (r *Record) Format(level Level, format string, args []interface{}) {
+var recordSyncPool = sync.Pool{
+	New: func() interface{} {
+		return &Record{
+			Header: make([]byte, RECORD_HEADER_BYTES),
+		}
+	},
+}
 
-	r.Reset() // 先重置
+type Writer interface {
+	Write(r *Record)
+	Flush()
+	Close()
+}
 
-	_, file, line, ok := runtime.Caller(3) // 调用链深度
+type Logger struct {
+	Writer
+	Level Level
+}
+
+const SKIP int = 2; // 统一跳过函数栈层次
+
+func (l *Logger) log(level Level, format string, args []interface{}) {
+	_, file, line, ok := runtime.Caller(SKIP) // 调用链深度
 	if !ok {
 		file = "???"
 		line = 1
@@ -86,6 +104,10 @@ func (r *Record) Format(level Level, format string, args []interface{}) {
 	hour, minute, second := now.Clock()
 	millis := now.Nanosecond() / 1000000
 
+	r := recordSyncPool.Get().(*Record)
+	defer 	recordSyncPool.Put(r)
+
+	r.Reset() // 先重置
 	// 标记时间点
 	r.Year, r.Month, r.Day, r.Hour = year, month, day, hour
 
@@ -126,37 +148,7 @@ func (r *Record) Format(level Level, format string, args []interface{}) {
 		r.WriteByte(CRLF)
 	}
 
-}
-
-var recordSyncPool = sync.Pool{
-	New: func() interface{} {
-		return &Record{
-			Header: make([]byte, RECORD_HEADER_BYTES),
-		}
-	},
-}
-
-type Writer interface {
-	Write(r *Record)
-	Flush()
-	Close()
-}
-
-type Logger struct {
-	sync.Mutex
-	Writer
-	Level Level
-}
-
-func (l *Logger) log(level Level, format string, args []interface{}) {
-	rec := recordSyncPool.Get().(*Record)
-	rec.Format(level, format, args)
-
-	l.Mutex.Lock()
-	l.Writer.Write(rec) // 是否需要rotate由writer自己实现
-	l.Mutex.Unlock()
-
-	recordSyncPool.Put(rec)
+	l.Writer.Write(r) // 是否需要rotate由writer自己实现
 }
 
 func (l *Logger) Debug(ctx context.Context, format string, args ...interface{}) {
@@ -213,10 +205,6 @@ func (l *Logger) Fatal(ctx context.Context, format string, args ...interface{}) 
 		l.log(FATAL, format, args)
 		os.Exit(1)
 	}
-}
-
-func (l *Logger) Flush() {
-	l.Writer.Flush()
 }
 
 var (

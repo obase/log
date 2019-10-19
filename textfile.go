@@ -6,10 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 )
 
 type TextfileWriter struct {
+	sync.Mutex
 	*Config
 	*os.File
 	*bufio.Writer
@@ -132,9 +134,9 @@ func rename(path string, year int, month time.Month, day int, hour int) error {
 	}
 	return errors.New("too much file with same prefix: " + npath)
 }
-
+// 需要加锁与解锁
 func (w *TextfileWriter) Write(r *Record) {
-
+	w.Mutex.Lock()
 	size := int64(r.Len())
 	rotated := false
 	if w.Config.RotateBytes > 0 && w.Config.RotateBytes < w.Size+size {
@@ -163,14 +165,19 @@ func (w *TextfileWriter) Write(r *Record) {
 	}
 	w.Writer.Write(r.Bytes())
 	w.Size += size
+	w.Mutex.Unlock()
 }
 
 func (w *TextfileWriter) Flush() {
+	w.Mutex.Lock()
 	w.Writer.Flush()
 	w.File.Sync()
+	w.Mutex.Unlock()
 }
 
 func (w *TextfileWriter) Close() {
+	w.Mutex.Lock()
 	w.Writer.Flush()
 	w.File.Close()
+	w.Mutex.Unlock()
 }
