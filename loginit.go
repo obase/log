@@ -24,7 +24,7 @@ func init() {
 		path, _ := conf.ElemString(config, "path")
 		rotateBytes, _ := conf.ElemInt(config, "rotateBytes")
 		rotateCycle, _ := conf.ElemString(config, "rotateCycle")
-		bufioWriterSize, _ := conf.ElemInt(config, "bufioWriterSize")
+		bufioWriterSize, ok := conf.ElemInt(config, "bufioWriterSize")
 		if !ok {
 			// 向前兼容旧的配置参数
 			bufioWriterSize, _ = conf.ElemInt(config, "writerBufSize")
