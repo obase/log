@@ -20,7 +20,7 @@ const (
 	WARN
 	ERROR
 	FATAL
-	OFF  //不输出任何日志
+	OFF //不输出任何日志
 )
 
 const (
@@ -88,7 +88,7 @@ type Logger struct {
 	Level Level
 }
 
-const SKIP int = 2; // 统一跳过函数栈层次
+const SKIP int = 2 // 统一跳过函数栈层次
 
 func (l *Logger) log(level Level, format string, args []interface{}) {
 	_, file, line, ok := runtime.Caller(SKIP) // 调用链深度
@@ -105,7 +105,7 @@ func (l *Logger) log(level Level, format string, args []interface{}) {
 	millis := now.Nanosecond() / 1000000
 
 	r := recordSyncPool.Get().(*Record)
-	defer 	recordSyncPool.Put(r)
+	defer recordSyncPool.Put(r)
 
 	r.Reset() // 先重置
 	// 标记时间点
@@ -143,7 +143,13 @@ func (l *Logger) log(level Level, format string, args []interface{}) {
 	r.WriteByte(MINUS)
 	r.WriteByte(SPACE)
 
-	fmt.Fprintf(r, format, args...)
+	// 优化无需格式的情况
+	if len(args) > 0 {
+		fmt.Fprintf(r, format, args...)
+	} else {
+		r.WriteString(format)
+	}
+
 	if format[len(format)-1] != CRLF {
 		r.WriteByte(CRLF)
 	}
