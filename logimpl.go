@@ -90,8 +90,8 @@ type Logger struct {
 
 const SKIP int = 2 // 统一跳过函数栈层次
 
-func (l *Logger) log(level Level, format string, args []interface{}) {
-	_, file, line, ok := runtime.Caller(SKIP) // 调用链深度
+func (l *Logger) Log(skip int, level Level, format string, args []interface{}) {
+	_, file, line, ok := runtime.Caller(skip) // 调用链深度
 	if !ok {
 		file = "???"
 		line = 1
@@ -159,25 +159,25 @@ func (l *Logger) log(level Level, format string, args []interface{}) {
 
 func (l *Logger) Debug(ctx context.Context, format string, args ...interface{}) {
 	if l.Level <= DEBUG {
-		l.log(DEBUG, format, args)
+		l.Log(SKIP, DEBUG, format, args)
 	}
 }
 
 func (l *Logger) Info(ctx context.Context, format string, args ...interface{}) {
 	if l.Level <= INFO {
-		l.log(INFO, format, args)
+		l.Log(SKIP, INFO, format, args)
 	}
 }
 
 func (l *Logger) Warn(ctx context.Context, format string, args ...interface{}) {
 	if l.Level <= WARN {
-		l.log(WARN, format, args)
+		l.Log(SKIP, WARN, format, args)
 	}
 }
 
 func (l *Logger) Error(ctx context.Context, format string, args ...interface{}) {
 	if l.Level <= ERROR {
-		l.log(ERROR, format, args)
+		l.Log(SKIP, ERROR, format, args)
 	}
 }
 
@@ -202,13 +202,13 @@ func stacks(all bool) []byte {
 
 func (l *Logger) ErrorStack(ctx context.Context, err interface{}, all bool) {
 	if l.Level <= ERROR {
-		l.log(ERROR, "%v\n%s", []interface{}{err, stacks(all)})
+		l.Log(SKIP, ERROR, "%v\n%s", []interface{}{err, stacks(all)})
 	}
 }
 
 func (l *Logger) Fatal(ctx context.Context, format string, args ...interface{}) {
 	if l.Level <= FATAL {
-		l.log(FATAL, format, args)
+		l.Log(SKIP, FATAL, format, args)
 		os.Exit(1)
 	}
 }
