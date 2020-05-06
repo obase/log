@@ -256,6 +256,7 @@ func Setup(flushPeriod time.Duration, configs ...*Config) (err error) {
 		}
 		if c.Default {
 			_default = logger
+			_loggers[""] = logger // 更好集成到其他平台
 		}
 	}
 
