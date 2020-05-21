@@ -2,6 +2,8 @@ package log
 
 import (
 	"fmt"
+	"os"
+
 	//"github.com/golang/glog"
 	"sync"
 	"testing"
@@ -10,6 +12,11 @@ import (
 
 func TestLogger(t *testing.T) {
 	ErrorStack(nil, "this is a error", false)
+}
+
+func TestParsePath(t *testing.T) {
+	os.Setenv("ENV", "prod")
+	fmt.Println(ParsePath("/data/log-${env}/${env} abc"))
 }
 
 func TestGetLog(t *testing.T) {

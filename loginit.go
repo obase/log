@@ -1,7 +1,9 @@
 package log
 
 import (
+	"bytes"
 	"github.com/obase/conf"
+	"os"
 	"strings"
 )
 
@@ -32,7 +34,7 @@ func init() {
 		options = append(options, &Config{
 			Name:            "",
 			Level:           GetLevel(level),
-			Path:            path,
+			Path:            ParsePath(path),
 			RotateBytes:     int64(rotateBytes),
 			RotateCycle:     GetCycle(rotateCycle),
 			BufioWriterSize: bufioWriterSize,
@@ -54,7 +56,7 @@ func init() {
 				options = append(options, &Config{
 					Name:            name,
 					Level:           GetLevel(level),
-					Path:            path,
+					Path:            ParsePath(path),
 					RotateBytes:     int64(rotateBytes),
 					RotateCycle:     GetCycle(rotateCycle),
 					BufioWriterSize: bufioWriterSize,
@@ -108,4 +110,66 @@ func GetCycle(val string) Cycle {
 		return HOURLY
 	}
 	return DAILY
+}
+
+func ParsePath(path string) string {
+	start := strings.IndexByte(path, '$')
+	if start == -1 {
+		return path
+	}
+
+	buf := new(bytes.Buffer)
+	mark := 0
+	end := 0
+	plen := len(path)
+	for {
+		if start == -1 {
+			buf.WriteString(path[mark:])
+			break
+		} else {
+			buf.WriteString(path[mark:start])
+		}
+		mark = start + 1
+		if path[mark] == '{' {
+			mark++
+			end = nextByte(&path, '}', mark, plen)
+			if end == -1 {
+				buf.WriteString(path[start:])
+				break
+			} else {
+				buf.WriteString(os.Getenv(path[mark:end]))
+			}
+			mark = end + 1
+		} else {
+			end = nextNotIdenByte(&path, mark, plen)
+			if end == -1 {
+				buf.WriteString(path[start:])
+				break
+			} else {
+				buf.WriteString(os.Getenv(path[mark:end]))
+			}
+			mark = end
+		}
+		start = nextByte(&path, '$', mark, plen)
+	}
+
+	return buf.String()
+}
+
+func nextByte(v *string, c byte, start int, end int) int {
+	for i := start; i < end; i++ {
+		if (*v)[i] == c {
+			return i
+		}
+	}
+	return -1
+}
+
+func nextNotIdenByte(v *string, start int, end int) int {
+	for i := start; i < end; i++ {
+		if ch := (*v)[i]; !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_') {
+			return i
+		}
+	}
+	return -1
 }
