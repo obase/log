@@ -22,7 +22,7 @@ type SyncWriter struct {
 	day             int
 }
 
-func NewSyncWriter(c *Config) (ret *SyncWriter, err error) {
+func newSyncWriter(c *Config) (ret *SyncWriter, err error) {
 	var (
 		path        string
 		file        *os.File
@@ -85,7 +85,7 @@ func (w *SyncWriter) Logs(level Level, format string, args ...interface{}) {
 	return
 }
 
-func (w *SyncWriter) Write(r *Record) {
+func (w *SyncWriter) Write(r *Record) (err error) {
 	size := int64(HEADER_BYTES + r.Len())
 	w.mutex.Lock()
 	if (w.rotateCycle == DAILY && (r.Year > w.year || r.Month > w.month || r.Day > w.day)) ||

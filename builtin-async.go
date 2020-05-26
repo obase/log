@@ -27,7 +27,7 @@ type AsyncWriter struct {
 	asynChanSize int // 异步通道大小
 }
 
-func NewAsyncWriter(c *Config) (ret *AsyncWriter, err error) {
+func newAsyncWriter(c *Config) (ret *AsyncWriter, err error) {
 	var (
 		path        string
 		file        *os.File
