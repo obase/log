@@ -81,10 +81,6 @@ func (w *SyncWriter) Logf(level Level, format string, args ...interface{}) {
 	return
 }
 
-func (w *SyncWriter) Logs(level Level, format string, args ...interface{}) {
-	return
-}
-
 func (w *SyncWriter) Write(r *Record) (err error) {
 	size := int64(HEADER_BYTES + r.Len())
 	w.mutex.Lock()

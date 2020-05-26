@@ -90,10 +90,6 @@ func (w *AsyncWriter) Logf(level Level, format string, args ...interface{}) {
 	return
 }
 
-func (w *AsyncWriter) LogStack(level Level, format string, args ...interface{}) {
-	return
-}
-
 func (w *AsyncWriter) write(r *Record) {
 
 }
