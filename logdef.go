@@ -118,19 +118,20 @@ var (
 // 用于替换
 func Setup(flushPeriod time.Duration, g *Logger, m map[string]*Logger) {
 
-	if gcnf != nil {
-		gcnf()
-	}
+	// 先关闭已经打开日志句柄与刷新线程
+	Close()
 
 	glog = g
 	for k, v := range m {
 		gmap[k] = v
 	}
-	gctx, gcnf = context.WithCancel(context.Background())
 
-	go flush(gctx, flushPeriod, g, m)
+	// 未指定刷新周期则不用启动刷新协程
+	if flushPeriod > 0 {
+		gctx, gcnf = context.WithCancel(context.Background())
+		go flush(gctx, flushPeriod, g, m)
+	}
 
-	return
 }
 
 func Get(name string) (ret *Logger) {
@@ -240,6 +241,9 @@ func Flush() {
 }
 
 func Close() {
+	if gcnf != nil {
+		gcnf()
+	}
 	if glog != nil {
 		glog.Close()
 	}

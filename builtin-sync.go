@@ -2,6 +2,7 @@ package log
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -45,16 +46,21 @@ func newSyncWriter(c *Config) (ret *SyncWriter, err error) {
 		path = c.Path
 		rotateBytes = c.RotateBytes
 		rotateCycle = c.RotateCycle
+
+		fi, _ := os.Stat(path)
+		if fi != nil {
+			size = fi.Size()
+			year, month, day = fi.ModTime().Date()
+		} else {
+			size = 0
+			year, month, day = time.Now().Date()
+		}
+
 		file, err = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return
 		}
-		fi, _ := os.Stat(path)
-		if fi != nil {
-			size = fi.Size()
-			mtime := fi.ModTime()
-			year, month, day = mtime.Date()
-		}
+
 	}
 
 	ret = &SyncWriter{
@@ -74,12 +80,15 @@ func newSyncWriter(c *Config) (ret *SyncWriter, err error) {
 	return
 }
 func (w *SyncWriter) Log(level Level, msgs ...interface{}) {
-	r := BorrowRecord() // 会在write方法中归还
+	r := BorrowRecord().Init(level, SKIP) // 会在write方法中归还
+	fmt.Fprintln(r.Buffer, msgs...)       // 不要用Fprint(), 会把前后二个string拼接起来
 	w.Write(r)
 }
 
 func (w *SyncWriter) Logf(level Level, format string, args ...interface{}) {
-	r := BorrowRecord() // 会在write方法中归还
+	r := BorrowRecord().Init(level, SKIP) // 会在write方法中归还
+	fmt.Fprintf(r.Buffer, format, args...)
+	r.Buffer.WriteByte('\n') // 没必要去比较, 大多数据情况是不会带换行符的
 	w.Write(r)
 }
 

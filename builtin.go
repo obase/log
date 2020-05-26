@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -53,12 +54,18 @@ func MergeConfig(c *Config) *Config {
 const (
 	DOT   = '.'
 	MINUS = '-'
+	SPACE = ' '
+	COLON = ':'
 )
 
 const (
 	HEADER_BYTES = 28   // 用于保存header部分"2020-05-26 16:40:11.370 [I] "
 	BUFFER_BYTES = 1024 // 初始buffer的大小, 默认1K
+	SKIP         = 2
 )
+
+var desc [5]byte = [5]byte{'D', 'I', 'W', 'E', 'F'}
+var hexs [16]byte = [16]byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
 
 type Record struct {
 	*bytes.Buffer
@@ -68,55 +75,135 @@ type Record struct {
 	Day    int
 }
 
+func NewRecord() *Record {
+	return &Record{
+		Buffer: bytes.NewBuffer(make([]byte, 0, BUFFER_BYTES)),
+		Header: make([]byte, HEADER_BYTES),
+	}
+}
+
+func (r *Record) Init(level Level, skip int) *Record {
+	r.Buffer.Reset()
+
+	// 先写入文件行号(重用Header)
+	_, file, line, ok := runtime.Caller(skip) // 调用链深度
+	if !ok {
+		file = "???"
+		line = 1
+	} else if pos := strings.LastIndexByte(file, '/'); pos >= 0 {
+		file = file[pos+1:]
+	}
+
+	r.Buffer.WriteString(file)
+	r.Buffer.WriteByte(COLON)
+
+	mark := 0
+	for line > 0 {
+		mark++
+		r.Header[mark] = hexs[line%10]
+		line /= 10
+	}
+	for mark > 0 {
+		r.Buffer.WriteByte(r.Header[mark])
+		mark--
+	}
+	r.Buffer.WriteByte(SPACE)
+	r.Buffer.WriteByte(MINUS)
+	r.Buffer.WriteByte(SPACE)
+
+	now := time.Now()
+	yr, mn, dt := now.Date()
+	hr, mi, sc := now.Clock()
+	ms := now.Nanosecond() / 1000000
+
+	// 再赋值年/月/日
+	r.Year, r.Month, r.Day = yr, mn, dt
+	// 最后渲染头部28个字符
+	r.Header[27] = SPACE
+	r.Header[26] = ']'
+	r.Header[25] = desc[level]
+	r.Header[24] = '['
+	r.Header[23] = SPACE
+	r.Header[22] = hexs[ms%10]
+	ms /= 10
+	r.Header[21] = hexs[ms%10]
+	ms /= 10
+	r.Header[20] = hexs[ms%10]
+	r.Header[19] = DOT
+	r.Header[18] = hexs[sc%10]
+	sc /= 10
+	r.Header[17] = hexs[sc%10]
+	r.Header[16] = COLON
+	r.Header[15] = hexs[mi%10]
+	mi /= 10
+	r.Header[14] = hexs[mi%10]
+	r.Header[13] = COLON
+	r.Header[12] = hexs[hr%10]
+	hr /= 10
+	r.Header[11] = hexs[hr%10]
+	r.Header[10] = SPACE
+	r.Header[9] = hexs[dt%10]
+	dt /= 10
+	r.Header[8] = hexs[dt%10]
+	r.Header[7] = MINUS
+	r.Header[6] = hexs[mn%10]
+	mn /= 10
+	r.Header[5] = hexs[mn%10]
+	r.Header[4] = MINUS
+	r.Header[3] = hexs[yr%10]
+	yr /= 10
+	r.Header[2] = hexs[yr%10]
+	yr /= 10
+	r.Header[1] = hexs[yr%10]
+	yr /= 10
+	r.Header[0] = hexs[yr%10]
+
+	return r
+}
+
 var buffPool = sync.Pool{
 	New: func() interface{} {
-		return &Record{
-			Buffer: bytes.NewBuffer(make([]byte, 0, BUFFER_BYTES)),
-			Header: make([]byte, HEADER_BYTES),
-		}
+		return NewRecord()
 	},
 }
 
 func BorrowRecord() *Record {
-	return buffPool.Get().(*Record)
+	r := buffPool.Get().(*Record)
+	return r
 }
 
 func ReturnRecord(buf *Record) {
 	buffPool.Put(buf)
 }
 
-func newBuiltinLogger(c *Config) (ret *Logger, err error) {
+func newBuiltinLogger(c *Config) (*Logger, error) {
 
 	c = MergeConfig(c)
 
 	if c.Async {
 		writer, err := newAsyncWriter(c)
 		if err != nil {
-			return
+			return nil, err
 		}
-		ret = &Logger{
+		return &Logger{
 			Log:   writer.Log,
 			Logf:  writer.Logf,
 			Flush: writer.Flush,
 			Close: writer.Close,
-		}
+		}, nil
 	} else {
 		writer, err := newSyncWriter(c)
 		if err != nil {
-			return
+			return nil, err
 		}
-		ret = &Logger{
+		return &Logger{
 			Log:   writer.Log,
 			Logf:  writer.Logf,
 			Flush: writer.Flush,
 			Close: writer.Close,
-		}
+		}, nil
 	}
-	return
 }
-
-var desc [5]byte = [5]byte{'D', 'I', 'W', 'E', 'F'}
-var hexs [16]byte = [16]byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
 
 func rename(path string, year int, month time.Month, day int) {
 
