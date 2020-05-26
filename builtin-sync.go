@@ -74,11 +74,13 @@ func newSyncWriter(c *Config) (ret *SyncWriter, err error) {
 	return
 }
 func (w *SyncWriter) Log(level Level, msgs ...interface{}) {
-	return
+	r := BorrowRecord() // 会在write方法中归还
+	w.Write(r)
 }
 
 func (w *SyncWriter) Logf(level Level, format string, args ...interface{}) {
-	return
+	r := BorrowRecord() // 会在write方法中归还
+	w.Write(r)
 }
 
 func (w *SyncWriter) Write(r *Record) (err error) {
@@ -110,6 +112,7 @@ func (w *SyncWriter) Write(r *Record) (err error) {
 	w.size += size
 __END:
 	w.mutex.Unlock()
+	ReturnRecord(r)
 	return
 }
 
