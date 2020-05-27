@@ -25,6 +25,7 @@ type syncWriter struct {
 
 func newSyncWriter(c *Config) (ret *syncWriter, err error) {
 	var (
+		path        string
 		rotateBytes int64
 		rotateCycle Cycle
 		file        *os.File
@@ -36,14 +37,17 @@ func newSyncWriter(c *Config) (ret *syncWriter, err error) {
 
 	switch lpath := strings.ToLower(c.Path); lpath {
 	case STDOUT:
+		path = lpath
 		rotateBytes = 0
 		rotateCycle = NEVER
 		file = os.Stdout
 	case STDERR:
+		path = lpath
 		rotateBytes = 0
 		rotateCycle = NEVER
 		file = os.Stderr
 	default:
+		path = Path(c.Path)
 		rotateBytes = c.RotateBytes
 		rotateCycle = c.RotateCycle
 		fi, _ := os.Stat(c.Path)
@@ -55,14 +59,14 @@ func newSyncWriter(c *Config) (ret *syncWriter, err error) {
 			year, month, day = time.Now().Date()
 		}
 
-		file, err = os.OpenFile(c.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		file, err = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return
 		}
 	}
 
 	ret = &syncWriter{
-		path:            c.Path,
+		path:            path,
 		bufioWriterSize: c.BufioWriterSize,
 		rotateCycle:     rotateCycle,
 		rotateBytes:     rotateBytes,

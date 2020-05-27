@@ -81,7 +81,7 @@ func (lg *Logger) Errorf(format string, args ...interface{}) {
 func (lg *Logger) ErrorStack(format string, args ...interface{}) {
 	if ERROR >= lg.Level {
 		format = format + "\n%s"
-		args = append(args, stack(false))
+		args = append(args, Stack(false))
 		lg.Logf(ERROR, format, args...)
 	}
 }
@@ -105,7 +105,7 @@ func (lg *Logger) Fatalf(format string, args ...interface{}) {
 func (lg *Logger) FatalStack(format string, args ...interface{}) {
 	if FATAL >= lg.Level {
 		format = format + "\n%s"
-		args = append(args, stack(false))
+		args = append(args, Stack(false))
 		lg.Logf(FATAL, format, args...)
 		Close() // FATAL前关闭掉所有日志,避免损失丢失关键信息
 		os.Exit(FATAL_EXIT_CODE)
@@ -209,7 +209,7 @@ func Errorf(format string, args ...interface{}) {
 func ErrorStack(format string, args ...interface{}) {
 	if ERROR >= glog.Level {
 		format = format + "\n%s"
-		args = append(args, stack(false))
+		args = append(args, Stack(false))
 		glog.Logf(ERROR, format, args...)
 	}
 }
@@ -233,7 +233,7 @@ func Fatalf(format string, args ...interface{}) {
 func FatalStack(format string, args ...interface{}) {
 	if FATAL >= glog.Level {
 		format = format + "\n%s"
-		args = append(args, stack(false))
+		args = append(args, Stack(false))
 		glog.Logf(FATAL, format, args...)
 		Close() // FATAL前关闭掉所有日志,避免损失丢失关键信息
 		os.Exit(FATAL_EXIT_CODE)

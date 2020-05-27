@@ -244,7 +244,7 @@ func rename(path string, year int, month time.Month, day int) {
 }
 
 // stacks is a wrapper for runtime.Stack that attempts to recover the data for all goroutines.
-func stack(all bool) []byte {
+func Stack(all bool) []byte {
 	// We don't know how big the traces are, so grow a few times if they don't fit. Start large, though.
 	n := 10000
 	if all {
@@ -260,4 +260,66 @@ func stack(all bool) []byte {
 		n *= 2
 	}
 	return trace
+}
+
+func Path(path string) string {
+	start := strings.IndexByte(path, '$')
+	if start == -1 {
+		return path
+	}
+
+	buf := new(bytes.Buffer)
+	mark := 0
+	end := 0
+	plen := len(path)
+	for {
+		if start == -1 {
+			buf.WriteString(path[mark:])
+			break
+		} else {
+			buf.WriteString(path[mark:start])
+		}
+		mark = start + 1
+		if path[mark] == '{' {
+			mark++
+			end = nextByte(&path, '}', mark, plen)
+			if end == -1 {
+				buf.WriteString(path[start:])
+				break
+			} else {
+				buf.WriteString(os.Getenv(path[mark:end]))
+			}
+			mark = end + 1
+		} else {
+			end = nextNotIdenByte(&path, mark, plen)
+			if end == -1 {
+				buf.WriteString(path[start:])
+				break
+			} else {
+				buf.WriteString(os.Getenv(path[mark:end]))
+			}
+			mark = end
+		}
+		start = nextByte(&path, '$', mark, plen)
+	}
+
+	return buf.String()
+}
+
+func nextByte(v *string, c byte, start int, end int) int {
+	for i := start; i < end; i++ {
+		if (*v)[i] == c {
+			return i
+		}
+	}
+	return -1
+}
+
+func nextNotIdenByte(v *string, start int, end int) int {
+	for i := start; i < end; i++ {
+		if ch := (*v)[i]; !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_') {
+			return i
+		}
+	}
+	return -1
 }
