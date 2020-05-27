@@ -3,6 +3,7 @@ package log
 import (
 	"flag"
 	"fmt"
+	"github.com/golang/glog"
 	"sync"
 	"testing"
 	"time"
@@ -19,6 +20,7 @@ func TestGetLog(t *testing.T) {
 	testInfo(paral, times)
 	end := time.Now().UnixNano()
 	fmt.Println("used (ns):", end-start)
+	time.Sleep(time.Second)
 }
 
 func testInfo(paral int, times int) {
@@ -28,8 +30,8 @@ func testInfo(paral int, times int) {
 		go func() {
 			defer wg.Done()
 			for i := 0; i < times; i++ {
-				Info(nil, "this is a test, j=%v, i=%v", j, i)
-				//glog.Infof("this is a test, j=%v, i=%v", j, i)
+				//Infof("this is a test, j=%v, i=%v", j, i)
+				glog.Infof("this is a test, j=%v, i=%v", j, i)
 			}
 		}()
 	}

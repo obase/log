@@ -120,8 +120,8 @@ func (w *syncWriter) Write(r *record) (err error) {
 		(w.rotateCycle == YEARLY && r.Year > w.year) {
 
 		// 刷新关闭旧流
-		w.writer.Flush()
-		w.file.Close()
+		err = w.writer.Flush()
+		err = w.file.Close()
 
 		// 重新命名旧文件
 		rename(w.path, w.year, w.month, w.day)

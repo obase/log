@@ -235,7 +235,7 @@ func rename(path string, year int, month time.Month, day int) {
 			npath = npath[:nsize] + strconv.FormatInt(time.Now().UnixNano(), 36) // 重新拼过时间戳
 		} else {
 			if err := os.Rename(path, npath); err != nil {
-				fmt.Fprintf(os.Stderr, "rename log file error: %v, %v -> %v\n", err, path, npath)
+				fmt.Fprintf(os.Stderr, "rename log file error: %v\n", err)
 			}
 			return
 		}
