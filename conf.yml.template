@@ -2,14 +2,14 @@
 logger:
   # 统一刷新间隔(可选), 包括默认以及exts配置的其他日志. 默认30s.
   flushPeriod: "10s"
-  # 日志级别(必需), DEBUG, INFO, ERROR, FATAL, OFF
+  # 日志级别(必需): DEBUG, INFO, ERROR, FATAL
   level: "DEBUG"
   # 日志路径(必需), stdout表示标准输出, stderr表示标准错误
   path: "/data/logs/xxx.log"
   # 轮转字节(byte)数, 默认为0表示不启用.
   #rotateBytes: 10240000
-  # 轮转周期(可选), 目前支持yearly, monthly, daily, hourly
-  rotateCycle: "hourly"
+  # 轮转周期(可选), 目前支持yearly, monthly, daily
+  rotateCycle: "daily"
   # 缓冲区大小(可选), 默认256K
   bufioWriterSize: 262144
   # 其他日志. 通过key引用保存到不同的日志文件, 例如预警,追踪等场合
