@@ -231,7 +231,7 @@ func rename(path string, year int, month time.Month, day int) {
 	recordPool.Put(buf)
 
 	for {
-		if info, err := os.Stat(path); info != nil || os.IsExist(err) {
+		if info, err := os.Stat(npath); info != nil || os.IsExist(err) {
 			npath = npath[:nsize] + strconv.FormatInt(time.Now().UnixNano(), 36) // 重新拼过时间戳
 		} else {
 			if err := os.Rename(path, npath); err != nil {
