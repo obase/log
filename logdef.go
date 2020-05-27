@@ -126,11 +126,12 @@ func Setup(flushPeriod time.Duration, g *Logger, m map[string]*Logger) {
 		gmap[k] = v
 	}
 
-	// 未指定刷新周期则不用启动刷新协程
-	if flushPeriod > 0 {
-		gctx, gcnf = context.WithCancel(context.Background())
-		go flush(gctx, flushPeriod, g, m)
+	// 如果未指定刷新周期则则用默认值
+	if flushPeriod < 0 {
+		flushPeriod = DEFAULT_FLUSH_PERIOD
 	}
+	gctx, gcnf = context.WithCancel(context.Background())
+	go flush(gctx, flushPeriod, g, m)
 
 }
 
