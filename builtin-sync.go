@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type SyncWriter struct {
+type syncWriter struct {
 	path            string
 	bufioWriterSize int
 	rotateBytes     int64
@@ -23,12 +23,11 @@ type SyncWriter struct {
 	day             int
 }
 
-func newSyncWriter(c *Config) (ret *SyncWriter, err error) {
+func newSyncWriter(c *Config) (ret *syncWriter, err error) {
 	var (
-		path        string
-		file        *os.File
 		rotateBytes int64
 		rotateCycle Cycle
+		file        *os.File
 		size        int64
 		year        int
 		month       time.Month
@@ -37,17 +36,17 @@ func newSyncWriter(c *Config) (ret *SyncWriter, err error) {
 
 	switch lpath := strings.ToLower(c.Path); lpath {
 	case STDOUT:
-		path = lpath
+		rotateBytes = 0
+		rotateCycle = NEVER
 		file = os.Stdout
 	case STDERR:
-		path = lpath
+		rotateBytes = 0
+		rotateCycle = NEVER
 		file = os.Stderr
 	default:
-		path = c.Path
 		rotateBytes = c.RotateBytes
 		rotateCycle = c.RotateCycle
-
-		fi, _ := os.Stat(path)
+		fi, _ := os.Stat(c.Path)
 		if fi != nil {
 			size = fi.Size()
 			year, month, day = fi.ModTime().Date()
@@ -56,15 +55,14 @@ func newSyncWriter(c *Config) (ret *SyncWriter, err error) {
 			year, month, day = time.Now().Date()
 		}
 
-		file, err = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		file, err = os.OpenFile(c.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return
 		}
-
 	}
 
-	ret = &SyncWriter{
-		path:            path,
+	ret = &syncWriter{
+		path:            c.Path,
 		bufioWriterSize: c.BufioWriterSize,
 		rotateCycle:     rotateCycle,
 		rotateBytes:     rotateBytes,
@@ -79,20 +77,24 @@ func newSyncWriter(c *Config) (ret *SyncWriter, err error) {
 
 	return
 }
-func (w *SyncWriter) Log(level Level, msgs ...interface{}) {
-	r := BorrowRecord().Init(level, SKIP) // 会在write方法中归还
-	fmt.Fprintln(r.Buffer, msgs...)       // 不要用Fprint(), 会把前后二个string拼接起来
+func (w *syncWriter) Log(level Level, msgs ...interface{}) {
+	r := recordPool.Get().(*record) // 会在write方法中归还
+	r.Buffer.Reset()
+	printHeader(r, level, SKIP)
+	fmt.Fprintln(r.Buffer, msgs...) // 不要用Fprint(), 会把相邻二个string拼接起来
 	w.Write(r)
 }
 
-func (w *SyncWriter) Logf(level Level, format string, args ...interface{}) {
-	r := BorrowRecord().Init(level, SKIP) // 会在write方法中归还
+func (w *syncWriter) Logf(level Level, format string, args ...interface{}) {
+	r := recordPool.Get().(*record) // 会在write方法中归还
+	r.Buffer.Reset()
+	printHeader(r, level, SKIP)
 	fmt.Fprintf(r.Buffer, format, args...)
 	r.Buffer.WriteByte('\n') // 没必要去比较, 大多数据情况是不会带换行符的
 	w.Write(r)
 }
 
-func (w *SyncWriter) Write(r *Record) (err error) {
+func (w *syncWriter) Write(r *record) (err error) {
 	size := int64(HEADER_BYTES + r.Len())
 	w.mutex.Lock()
 	if (w.rotateCycle == DAILY && (r.Year > w.year || r.Month > w.month || r.Day > w.day)) ||
@@ -121,20 +123,23 @@ func (w *SyncWriter) Write(r *Record) (err error) {
 	w.size += size
 __END:
 	w.mutex.Unlock()
-	ReturnRecord(r)
+	recordPool.Put(r)
 	return
 }
 
-func (w *SyncWriter) Flush() {
+func (w *syncWriter) Flush() {
 	w.mutex.Lock()
 	w.writer.Flush()
 	w.file.Sync()
 	w.mutex.Unlock()
 }
 
-func (w *SyncWriter) Close() {
+func (w *syncWriter) Close() {
 	w.mutex.Lock()
 	w.writer.Flush()
-	w.file.Close()
+	// 不能关闭标准输出/标准错误
+	if w.file != os.Stdout && w.file != os.Stderr {
+		w.file.Close()
+	}
 	w.mutex.Unlock()
 }

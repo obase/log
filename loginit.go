@@ -32,7 +32,8 @@ func init() {
 			rotateCycle     string
 			bufioWriterSize int
 			async           bool
-			asyncLimit      int
+			asyncWriteLimit int
+			asyncCloseDelay time.Duration
 			err             error
 		)
 
@@ -44,7 +45,8 @@ func init() {
 		rotateCycle, _ = conf.ElemString(config, "rotateCycle")
 		bufioWriterSize, _ = conf.ElemInt(config, "bufioWriterSize")
 		async, _ = conf.ElemBool(config, "async")
-		asyncLimit, _ = conf.ElemInt(config, "asyncLimit")
+		asyncWriteLimit, _ = conf.ElemInt(config, "asyncWriteLimit")
+		asyncCloseDelay, _ = conf.ElemDuration(config, "asyncCloseDelay")
 
 		global, err = newBuiltinLogger(&Config{
 			Level:           GetLevel(level),
@@ -53,7 +55,8 @@ func init() {
 			RotateCycle:     GetCycle(rotateCycle),
 			BufioWriterSize: bufioWriterSize,
 			Async:           async,
-			AsyncLimit:      asyncLimit,
+			AsyncWriteLimit: asyncWriteLimit,
+			AsyncCloseDelay: asyncCloseDelay,
 		})
 		if err != nil {
 			panic(err)
@@ -67,7 +70,14 @@ func init() {
 			rotateCycle, _ = conf.ElemString(config, "rotateCycle")
 			bufioWriterSize, _ = conf.ElemInt(config, "bufioWriterSize")
 			async, _ = conf.ElemBool(config, "async")
-			asyncLimit, _ = conf.ElemInt(config, "asyncLimit")
+			asyncWriteLimit, ok = conf.ElemInt(config, "asyncWriteLimit")
+			if !ok {
+				asyncWriteLimit = -1 // 使用默认值
+			}
+			asyncCloseDelay, ok = conf.ElemDuration(config, "asyncCloseDelay")
+			if !ok {
+				asyncCloseDelay = -1 // 使用默认值
+			}
 
 			var logger *Logger
 			logger, err = newBuiltinLogger(&Config{
@@ -77,7 +87,8 @@ func init() {
 				RotateCycle:     GetCycle(rotateCycle),
 				BufioWriterSize: bufioWriterSize,
 				Async:           async,
-				AsyncLimit:      asyncLimit,
+				AsyncWriteLimit: asyncWriteLimit,
+				AsyncCloseDelay: asyncCloseDelay,
 			})
 			if err != nil {
 				panic(err)

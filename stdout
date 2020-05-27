@@ -1,0 +1,8 @@
+2020-05-27 11:33:24.697 [D] builtin_test.go:9 - this is a debug
+2020-05-27 11:33:24.705 [I] builtin_test.go:10 - this is a warn
+2020-05-27 11:33:24.705 [W] builtin_test.go:11 - this is a warn
+2020-05-27 11:33:24.705 [E] builtin_test.go:12 - this is a error
+2020-05-27 11:33:24.705 [D] builtin_test.go:16 - this is a debug@notify
+2020-05-27 11:33:24.705 [I] builtin_test.go:17 - this is a warn@notify
+2020-05-27 11:33:24.705 [W] builtin_test.go:18 - this is a warn@notify
+2020-05-27 11:33:24.705 [E] builtin_test.go:19 - this is a error@notify
