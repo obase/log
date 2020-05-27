@@ -1,7 +1,7 @@
 package log
 
 import (
-	"github.com/obase/conf"
+	"github.com/obase/conf/v2"
 	"strings"
 	"time"
 )
