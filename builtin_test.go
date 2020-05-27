@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetLog(t *testing.T) {
-	defer _glog.Flush()
+	//defer glog.Flush()
 	defer Flush()
 	flag.Set("log_dir", `E:\data\logs`)
 	flag.Parse()
