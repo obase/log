@@ -113,10 +113,10 @@ func (lg *Logger) FatalStack(format string, args ...interface{}) {
 }
 
 var (
-	glog *Logger
-	gmap = make(map[string]*Logger)
-	gctx context.Context
-	gcnf context.CancelFunc
+	_glog *Logger
+	_gmap = make(map[string]*Logger)
+	_gctx context.Context
+	_gcnf context.CancelFunc
 )
 
 // 用于替换
@@ -125,33 +125,33 @@ func Setup(flushPeriod time.Duration, g *Logger, m map[string]*Logger) {
 	// 先关闭已经打开日志句柄与刷新线程
 	Close()
 
-	glog = g
+	_glog = g
 	for k, v := range m {
-		gmap[k] = v
+		_gmap[k] = v
 	}
 
 	// 如果未指定刷新周期则则用默认值
 	if flushPeriod <= 0 {
 		flushPeriod = DEFAULT_FLUSH_PERIOD
 	}
-	gctx, gcnf = context.WithCancel(context.Background())
-	go flush(gctx, flushPeriod, g, m)
+	_gctx, _gcnf = context.WithCancel(context.Background())
+	go flush(_gctx, flushPeriod, g, m)
 
 }
 
 func Get(name string) (ret *Logger) {
 	if name == "" {
-		ret = glog
+		ret = _glog
 	}
-	ret = gmap[name]
+	ret = _gmap[name]
 	return
 }
 
 func Must(name string) (ret *Logger) {
 	if name == "" {
-		ret = glog
+		ret = _glog
 	}
-	ret = gmap[name]
+	ret = _gmap[name]
 	if ret == nil {
 		panic("invalid logger " + name)
 	}
@@ -159,104 +159,104 @@ func Must(name string) (ret *Logger) {
 }
 
 func Debug(args ...interface{}) {
-	if DEBUG >= glog.Level {
-		glog.Log(DEBUG, args...)
+	if DEBUG >= _glog.Level {
+		_glog.Log(DEBUG, args...)
 	}
 }
 
 func Debugf(format string, args ...interface{}) {
-	if DEBUG >= glog.Level {
-		glog.Logf(DEBUG, format, args...)
+	if DEBUG >= _glog.Level {
+		_glog.Logf(DEBUG, format, args...)
 	}
 }
 
 func Info(args ...interface{}) {
-	if INFO >= glog.Level {
-		glog.Log(INFO, args...)
+	if INFO >= _glog.Level {
+		_glog.Log(INFO, args...)
 	}
 }
 
 func Infof(format string, args ...interface{}) {
-	if INFO >= glog.Level {
-		glog.Logf(INFO, format, args...)
+	if INFO >= _glog.Level {
+		_glog.Logf(INFO, format, args...)
 	}
 }
 
 func Warn(args ...interface{}) {
-	if WARN >= glog.Level {
-		glog.Log(WARN, args...)
+	if WARN >= _glog.Level {
+		_glog.Log(WARN, args...)
 	}
 }
 
 func Warnf(format string, args ...interface{}) {
-	if WARN >= glog.Level {
-		glog.Logf(WARN, format, args...)
+	if WARN >= _glog.Level {
+		_glog.Logf(WARN, format, args...)
 	}
 }
 
 func Error(args ...interface{}) {
-	if ERROR >= glog.Level {
-		glog.Log(ERROR, args...)
+	if ERROR >= _glog.Level {
+		_glog.Log(ERROR, args...)
 	}
 }
 
 func Errorf(format string, args ...interface{}) {
-	if ERROR >= glog.Level {
-		glog.Logf(ERROR, format, args...)
+	if ERROR >= _glog.Level {
+		_glog.Logf(ERROR, format, args...)
 	}
 }
 
 func ErrorStack(format string, args ...interface{}) {
-	if ERROR >= glog.Level {
+	if ERROR >= _glog.Level {
 		format = format + "\n%s"
 		args = append(args, Stack(false))
-		glog.Logf(ERROR, format, args...)
+		_glog.Logf(ERROR, format, args...)
 	}
 }
 
 func Fatal(args ...interface{}) {
-	if FATAL >= glog.Level {
-		glog.Log(FATAL, args...)
+	if FATAL >= _glog.Level {
+		_glog.Log(FATAL, args...)
 		Close() // FATAL前关闭掉所有日志,避免损失丢失关键信息
 		os.Exit(FATAL_EXIT_CODE)
 	}
 }
 
 func Fatalf(format string, args ...interface{}) {
-	if FATAL >= glog.Level {
-		glog.Logf(FATAL, format, args...)
+	if FATAL >= _glog.Level {
+		_glog.Logf(FATAL, format, args...)
 		Close() // FATAL前关闭掉所有日志,避免损失丢失关键信息
 		os.Exit(FATAL_EXIT_CODE)
 	}
 }
 
 func FatalStack(format string, args ...interface{}) {
-	if FATAL >= glog.Level {
+	if FATAL >= _glog.Level {
 		format = format + "\n%s"
 		args = append(args, Stack(false))
-		glog.Logf(FATAL, format, args...)
+		_glog.Logf(FATAL, format, args...)
 		Close() // FATAL前关闭掉所有日志,避免损失丢失关键信息
 		os.Exit(FATAL_EXIT_CODE)
 	}
 }
 
 func Flush() {
-	if glog != nil {
-		glog.Flush()
+	if _glog != nil {
+		_glog.Flush()
 	}
-	for _, v := range gmap {
+	for _, v := range _gmap {
 		v.Flush()
 	}
 }
 
 func Close() {
-	if gcnf != nil {
-		gcnf()
+	if _gcnf != nil {
+		_gcnf()
 	}
-	if glog != nil {
-		glog.Close()
+	if _glog != nil {
+		_glog.Close()
 	}
-	for _, v := range gmap {
+	for _, v := range _gmap {
 		v.Close()
 	}
 }
