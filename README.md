@@ -1,17 +1,17 @@
-# package log
-提供通用日志接口及默认实现!
+# package log (v2)
+v2提供统一的日志代理接口, 并提供builtin的日志实现
 
-# Installation
+## Installation
 - go get
 ```
 go get -u github.com/obase/log
 ```
-- go mod
+- go mod 
 ```
-go mod edit -require=github.com/obase/log@latest
+go mod edit -require=github.com/obase/log@latest # v2.0.0+
 ```
 
-# Configuration
+## Configuration
 ```
 # 系统日志设置
 logger:
@@ -39,7 +39,206 @@ logger:
 
 ```
 
-# Index
+## Index
+
+### 统一日志代理
+
+- Setup
+
+安装代理使用的所有logger及刷新时间.
+```
+func Setup(flushPeriod time.Duration, g *Logger, m map[string]*Logger)
+```
+
+- Get
+
+获取特定名称的logger, 结果可能为空
+```
+func Get(name string) (ret *Logger) 
+```
+
+- Must
+
+获取特定名称的logger, 结果不能为空
+```
+func Must(name string) (ret *Logger)
+```
+
+- Debug
+
+```
+func Debug(args ...interface{}) 
+```
+- Debugf
+
+```
+func Debugf(format string, args ...interface{})
+```
+- Info
+
+```
+func Info(args ...interface{})
+```
+- Infof
+
+```
+func Infof(format string, args ...interface{})
+```
+
+- Warn
+
+```
+func Warn(args ...interface{})
+```
+
+- Warnf
+```
+func Warnf(format string, args ...interface{}) 
+```
+
+- Error
+```
+func Error(args ...interface{}) 
+```
+
+- Errorf
+```
+func Errorf(format string, args ...interface{})
+```
+
+- ErrorStack
+```
+func ErrorStack(format string, args ...interface{})
+```
+
+- Fatal
+```
+func Fatal(args ...interface{}) 
+```
+
+- Fatalf
+```
+func Fatalf(format string, args ...interface{})
+```
+
+- FatalStack
+```
+func FatalStack(format string, args ...interface{}) 
+```
+
+- type Logger
+
+统一的日志结构
+```
+type Logger struct {
+	Level Level
+	Log   func(level Level, args ...interface{})
+	Logf  func(level Level, format string, args ...interface{})
+	Flush func()
+	Close func()
+}
+```
+
+- (lg *Logger) Debug
+```
+func (lg *Logger) Debug(args ...interface{}) 
+```
+- (lg *Logger) Debugf
+```
+func (lg *Logger) Debugf(format string, args ...interface{})
+```
+- (lg *Logger) Info
+```
+func (lg *Logger) Info(args ...interface{})
+```
+- (lg *Logger) Infof
+```
+func (lg *Logger) Infof(format string, args ...interface{})
+```
+
+- (lg *Logger) Warn
+```
+func (lg *Logger) Warn(args ...interface{})
+```
+
+- (lg *Logger) Warnf
+```
+func (lg *Logger) Warnf(format string, args ...interface{}) 
+```
+
+- (lg *Logger) Error
+```
+func (lg *Logger) Error(args ...interface{}) 
+```
+
+- (lg *Logger) Errorf
+```
+func (lg *Logger) Errorf(format string, args ...interface{})
+```
+
+- (lg *Logger) ErrorStack
+```
+func (lg *Logger) ErrorStack(format string, args ...interface{})
+```
+
+- (lg *Logger) Fatal
+```
+func (lg *Logger) Fatal(args ...interface{}) 
+```
+
+- (lg *Logger) Fatalf
+```
+func (lg *Logger) Fatalf(format string, args ...interface{})
+```
+
+- (lg *Logger) FatalStack
+```
+func (lg *Logger) FatalStack(format string, args ...interface{}) 
+```
+
+
+# package log (v1)
+提供通用日志接口及默认实现!
+
+## Installation
+- go get
+```
+go get -u github.com/obase/log
+```
+- go mod
+```
+go mod edit -require=github.com/obase/log@latest
+```
+
+## Configuration
+```
+# 系统日志设置
+logger:
+  # 统一刷新间隔(可选), 包括默认以及exts配置的其他日志. 默认30s.
+  flushPeriod: "10s"
+  # 日志级别(必需), DEBUG, INFO, ERROR, FATAL, OFF
+  level: "DEBUG"
+  # 日志路径(必需), stdout表示标准输出, stderr表示标准错误
+  path: "/data/logs/xxx.log"
+  # 轮转字节(byte)数, 默认为0表示不启用.
+  #rotateBytes: 10240000
+  # 轮转周期(可选), 目前支持yearly, monthly, daily, hourly
+  rotateCycle: "hourly"
+  # 缓冲区大小(可选), 默认256K
+  bufioWriterSize: 262144
+  # 其他日志. 通过key引用保存到不同的日志文件, 例如预警,追踪等场合
+  exts:
+    # 日志名称
+    alarm:
+      level:
+      path: stdout
+      rotateBytes:
+      rotateCycle:
+      bufioWriterSize:
+
+```
+
+## Index
 - Constants
 ```
 const (
@@ -131,7 +330,7 @@ var Debug func(ctx context.Context, format string, args ...interface{})
 ```
 var Flush func()
 ```
-# Examples
+## Examples
 ```
 package log
 

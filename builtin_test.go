@@ -38,7 +38,8 @@ func testInfo(paral int, times int) {
 }
 
 func TestDebug(t *testing.T) {
-	Debug("this", "is")
+	defer Flush()
+	ErrorStack("test it")
 	var a int64 = 1073741824
 	fmt.Println(a)
 }
