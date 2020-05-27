@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -57,13 +58,25 @@ func newAsyncWriter(c *Config) (ret *asyncWriter, err error) {
 		path = Path(c.Path)
 		rotateBytes = c.RotateBytes
 		rotateCycle = c.RotateCycle
-		fi, _ := os.Stat(c.Path)
+		fi, _ := os.Stat(path)
 		if fi != nil {
 			size = fi.Size()
 			year, month, day = fi.ModTime().Date()
 		} else {
 			size = 0
 			year, month, day = time.Now().Date()
+
+			//判断父目录是否存在,否则open_file会失败
+			var (
+				dir = filepath.Dir(path)
+				fd  os.FileInfo
+			)
+			fd, err = os.Stat(dir)
+			if fd == nil || os.IsNotExist(err) {
+				if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+					return // 无法创建父目录
+				}
+			}
 		}
 
 		file, err = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

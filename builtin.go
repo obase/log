@@ -323,3 +323,4 @@ func nextNotIdenByte(v *string, start int, end int) int {
 	}
 	return -1
 }
+

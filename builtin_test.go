@@ -2,28 +2,39 @@ package log
 
 import (
 	"fmt"
-	"os"
+	"sync"
 	"testing"
+	"time"
 )
 
-func TestReturnBuffer(t *testing.T) {
-	fmt.Println(os.Getenv("NOTIFY"))
-
-	defer Close()
-	Debug("this", "is", "a", "debug")
-	Info("this", "is", "a", "warn")
-	Warn("this", "is", "a", "warn")
-	Error("this", "is", "a", "error")
-	//Fatal("this", "is", "a", "fatal")
-
-	notify := Get("notify")
-	notify.Debug("this", "is", "a", "debug@notify")
-	notify.Info("this", "is", "a", "warn@notify")
-	notify.Warn("this", "is", "a", "warn@notify")
-	notify.Error("this", "is", "a", "error@notify")
+func TestGetLog(t *testing.T) {
+	//defer glog.Flush()
+	defer Flush()
+	//flag.Set("log_dir", `E:\data\logs`)
+	//flag.Parse()
+	paral := 100
+	times := 100 * 10000
+	start := time.Now().UnixNano()
+	testInfo(paral, times)
+	end := time.Now().UnixNano()
+	fmt.Println("used (ms):", (end-start)/1000000)
 }
 
-func TestPath(t *testing.T) {
-	os.Setenv("NOTIFY", "notify-env-test")
-	fmt.Println(Path("/data/${NOTIFY}.log"))
+func testInfo(paral int, times int) {
+	wg := sync.WaitGroup{}
+	for j := 0; j < paral; j++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < times; i++ {
+				Info(nil, "this is a test, j=%v, i=%v", j, i)
+				//glog.Infof("this is a test, j=%v, i=%v", j, i)
+			}
+		}()
+	}
+	wg.Wait()
+}
+
+func TestDebug(t *testing.T) {
+	Debug("this", "is")
 }
