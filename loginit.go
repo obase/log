@@ -11,7 +11,7 @@ const CKEY = "logger"
 func init() {
 	config, ok := conf.GetMap(CKEY)
 	if !ok {
-		stdout, err := newBuiltinLogger(&Config{
+		stdout, err := NewBuiltinLogger(&Config{
 			Level: DEBUG,
 			Path:  STDERR,
 		})
@@ -48,7 +48,7 @@ func init() {
 		asyncWriteLimit, _ = conf.ElemInt(config, "asyncWriteLimit")
 		asyncCloseDelay, _ = conf.ElemDuration(config, "asyncCloseDelay")
 
-		global, err = newBuiltinLogger(&Config{
+		global, err = NewBuiltinLogger(&Config{
 			Level:           GetLevel(level),
 			Path:            path,
 			RotateBytes:     rotateBytes,
@@ -80,7 +80,7 @@ func init() {
 			}
 
 			var logger *Logger
-			logger, err = newBuiltinLogger(&Config{
+			logger, err = NewBuiltinLogger(&Config{
 				Level:           GetLevel(level),
 				Path:            path,
 				RotateBytes:     rotateBytes,
