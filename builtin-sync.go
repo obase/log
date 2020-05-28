@@ -1,11 +1,7 @@
-/*
-经测试,异步比同步写入更慢...原因估计是channel + mutex导致性能直线下降
-*/
-package v2
+package log
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,7 +10,7 @@ import (
 	"time"
 )
 
-type asyncWriter struct {
+type syncWriter struct {
 	path            string
 	bufioWriterSize int
 	rotateBytes     int64
@@ -26,13 +22,9 @@ type asyncWriter struct {
 	year            int
 	month           time.Month
 	day             int
-	lctx            context.Context // 异步读写
-	lcnf            context.CancelFunc
-	lchn            chan *record
-	closeDelay      time.Duration
 }
 
-func newAsyncWriter(c *Config) (ret *asyncWriter, err error) {
+func newSyncWriter(c *Config) (ret *syncWriter, err error) {
 	var (
 		path        string
 		rotateBytes int64
@@ -42,8 +34,6 @@ func newAsyncWriter(c *Config) (ret *asyncWriter, err error) {
 		year        int
 		month       time.Month
 		day         int
-		lctx        context.Context
-		lcnf        context.CancelFunc
 	)
 
 	switch lpath := strings.ToLower(c.Path); lpath {
@@ -86,12 +76,9 @@ func newAsyncWriter(c *Config) (ret *asyncWriter, err error) {
 		if err != nil {
 			return
 		}
-
 	}
 
-	lctx, lcnf = context.WithCancel(context.Background())
-
-	ret = &asyncWriter{
+	ret = &syncWriter{
 		path:            path,
 		bufioWriterSize: c.BufioWriterSize,
 		rotateCycle:     rotateCycle,
@@ -103,57 +90,28 @@ func newAsyncWriter(c *Config) (ret *asyncWriter, err error) {
 		year:            year,
 		month:           month,
 		day:             day,
-		lctx:            lctx,
-		lcnf:            lcnf,
-		lchn:            make(chan *record, c.AsyncWriteLimit),
-		closeDelay:      c.AsyncCloseDelay,
 	}
-
-	go ret.launchAsyncProcess()
 
 	return
 }
-func (w *asyncWriter) Log(level Level, msgs ...interface{}) {
+func (w *syncWriter) Log(level Level, msgs ...interface{}) {
 	r := recordPool.Get().(*record) // 会在write方法中归还
 	r.Buffer.Reset()
 	printHeader(r, level, SKIP)
 	fmt.Fprintln(r.Buffer, msgs...) // 不要用Fprint(), 会把相邻二个string拼接起来
-	w.lchn <- r
+	w.Write(r)
 }
 
-func (w *asyncWriter) Logf(level Level, format string, args ...interface{}) {
+func (w *syncWriter) Logf(level Level, format string, args ...interface{}) {
 	r := recordPool.Get().(*record) // 会在write方法中归还
 	r.Buffer.Reset()
 	printHeader(r, level, SKIP)
 	fmt.Fprintf(r.Buffer, format, args...)
 	r.Buffer.WriteByte('\n') // 没必要去比较, 大多数据情况是不会带换行符的
-	w.lchn <- r
+	w.Write(r)
 }
 
-func (w *asyncWriter) launchAsyncProcess() {
-	for { // 启动后台异步进程, 非正常退出则自动重入
-		exit := func() bool {
-			defer func() {
-				if perr := recover(); perr != nil {
-					fmt.Fprintf(os.Stderr, "async process panic: %v", perr)
-				}
-			}()
-			for {
-				select {
-				case r := <-w.lchn:
-					w.Write(r)
-				case <-w.lctx.Done():
-					return true
-				}
-			}
-		}()
-		if exit {
-			return
-		}
-	}
-}
-
-func (w *asyncWriter) Write(r *record) (err error) {
+func (w *syncWriter) Write(r *record) (err error) {
 	size := int64(HEADER_BYTES + r.Len())
 	w.mutex.Lock()
 	if (w.rotateCycle == DAILY && (r.Year > w.year || r.Month > w.month || r.Day > w.day)) ||
@@ -162,8 +120,8 @@ func (w *asyncWriter) Write(r *record) (err error) {
 		(w.rotateCycle == YEARLY && r.Year > w.year) {
 
 		// 刷新关闭旧流
-		w.writer.Flush()
-		w.file.Close()
+		err = w.writer.Flush()
+		err = w.file.Close()
 
 		// 重新命名旧文件
 		rename(w.path, w.year, w.month, w.day)
@@ -186,20 +144,15 @@ __END:
 	return
 }
 
-func (w *asyncWriter) Flush() {
+func (w *syncWriter) Flush() {
 	w.mutex.Lock()
 	w.writer.Flush()
 	w.file.Sync()
 	w.mutex.Unlock()
 }
 
-func (w *asyncWriter) Close() {
-	// 如果是异步稍做等待
-	if w.file != nil {
-		time.Sleep(w.closeDelay)
-	}
+func (w *syncWriter) Close() {
 	w.mutex.Lock()
-	w.lcnf() // 关闭异步上下文
 	w.writer.Flush()
 	// 不能关闭标准输出/标准错误
 	if w.file != os.Stdout && w.file != os.Stderr {
