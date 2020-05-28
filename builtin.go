@@ -171,7 +171,7 @@ func printHeader(r *record, level Level, skip int) *record {
 	return r
 }
 
-func newBuiltinLogger(c *Config) (*Logger, error) {
+func NewBuiltinLogger(c *Config) (*Logger, error) {
 
 	c = MergeConfig(c)
 
@@ -323,4 +323,3 @@ func nextNotIdenByte(v *string, start int, end int) int {
 	}
 	return -1
 }
-
