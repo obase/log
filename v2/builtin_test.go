@@ -1,4 +1,4 @@
-package log
+package v2
 
 import (
 	"flag"

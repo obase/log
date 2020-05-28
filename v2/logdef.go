@@ -1,7 +1,7 @@
 /*
 实现log代理层接口功能,默认使用builtin的logger实现. 但开发可以调用Setup()重置内置的日志逻辑. 但不保证并发安全.
 */
-package log
+package v2
 
 import (
 	"context"

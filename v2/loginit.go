@@ -1,4 +1,4 @@
-package log
+package v2
 
 import (
 	"github.com/obase/conf/v2"
