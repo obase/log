@@ -6,10 +6,16 @@ import (
 	"time"
 )
 
-const CKEY = "logger"
+const (
+	CKEY     = "log"
+	OLD_CKEY = "logger"
+)
 
 func init() {
 	config, ok := conf.GetMap(CKEY)
+	if !ok {
+		config, ok = conf.GetMap(OLD_CKEY) // 兼容旧的配置
+	}
 	if !ok {
 		stdout, err := NewBuiltinLogger(&Config{
 			Level: DEBUG,
@@ -31,9 +37,6 @@ func init() {
 			rotateBytes     int64
 			rotateCycle     string
 			bufioWriterSize int
-			async           bool
-			asyncWriteLimit int
-			asyncCloseDelay time.Duration
 			err             error
 		)
 
@@ -44,9 +47,6 @@ func init() {
 		rotateBytes, _ = conf.ElemInt64(config, "rotateBytes")
 		rotateCycle, _ = conf.ElemString(config, "rotateCycle")
 		bufioWriterSize, _ = conf.ElemInt(config, "bufioWriterSize")
-		async, _ = conf.ElemBool(config, "async")
-		asyncWriteLimit, _ = conf.ElemInt(config, "asyncWriteLimit")
-		asyncCloseDelay, _ = conf.ElemDuration(config, "asyncCloseDelay")
 
 		global, err = NewBuiltinLogger(&Config{
 			Level:           GetLevel(level),
@@ -54,9 +54,6 @@ func init() {
 			RotateBytes:     rotateBytes,
 			RotateCycle:     GetCycle(rotateCycle),
 			BufioWriterSize: bufioWriterSize,
-			Async:           async,
-			AsyncWriteLimit: asyncWriteLimit,
-			AsyncCloseDelay: asyncCloseDelay,
 		})
 		if err != nil {
 			panic(err)
@@ -69,15 +66,6 @@ func init() {
 			rotateBytes, _ = conf.ElemInt64(config, "rotateBytes")
 			rotateCycle, _ = conf.ElemString(config, "rotateCycle")
 			bufioWriterSize, _ = conf.ElemInt(config, "bufioWriterSize")
-			async, _ = conf.ElemBool(config, "async")
-			asyncWriteLimit, ok = conf.ElemInt(config, "asyncWriteLimit")
-			if !ok {
-				asyncWriteLimit = -1 // 使用默认值
-			}
-			asyncCloseDelay, ok = conf.ElemDuration(config, "asyncCloseDelay")
-			if !ok {
-				asyncCloseDelay = -1 // 使用默认值
-			}
 
 			var logger *Logger
 			logger, err = NewBuiltinLogger(&Config{
@@ -86,9 +74,6 @@ func init() {
 				RotateBytes:     rotateBytes,
 				RotateCycle:     GetCycle(rotateCycle),
 				BufioWriterSize: bufioWriterSize,
-				Async:           async,
-				AsyncWriteLimit: asyncWriteLimit,
-				AsyncCloseDelay: asyncCloseDelay,
 			})
 			if err != nil {
 				panic(err)

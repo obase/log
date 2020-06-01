@@ -29,14 +29,11 @@ type Config struct {
 	Level           Level
 	Path            string
 	RotateBytes     int64
-	RotateCycle     Cycle         //轮转周期,目前仅支持
-	BufioWriterSize int           //Buffer写缓存大小
-	Async           bool          // 是否使用异步
-	AsyncWriteLimit int           // 异步写入限制
-	AsyncCloseDelay time.Duration // 异步关闭休眠
+	RotateCycle     Cycle //轮转周期,目前仅支持
+	BufioWriterSize int   //Buffer写缓存大小
 }
 
-func MergeConfig(c *Config) *Config {
+func mergeConfig(c *Config) *Config {
 	if c == nil {
 		c = new(Config)
 	}
@@ -45,12 +42,6 @@ func MergeConfig(c *Config) *Config {
 	}
 	if c.BufioWriterSize == 0 {
 		c.BufioWriterSize = 256 * 1024 // 默认256K
-	}
-	if c.AsyncWriteLimit < 0 {
-		c.AsyncWriteLimit = 256 // 默认256
-	}
-	if c.AsyncCloseDelay < 0 {
-		c.AsyncCloseDelay = 100 * time.Millisecond
 	}
 	return c
 }
@@ -173,31 +164,18 @@ func printHeader(r *record, level Level, skip int) *record {
 
 func NewBuiltinLogger(c *Config) (*Logger, error) {
 
-	c = MergeConfig(c)
+	c = mergeConfig(c)
 
-	if c.Async {
-		writer, err := newAsyncWriter(c)
-		if err != nil {
-			return nil, err
-		}
-		return &Logger{
-			Log:   writer.Log,
-			Logf:  writer.Logf,
-			Flush: writer.Flush,
-			Close: writer.Close,
-		}, nil
-	} else {
-		writer, err := newSyncWriter(c)
-		if err != nil {
-			return nil, err
-		}
-		return &Logger{
-			Log:   writer.Log,
-			Logf:  writer.Logf,
-			Flush: writer.Flush,
-			Close: writer.Close,
-		}, nil
+	writer, err := newSyncWriter(c)
+	if err != nil {
+		return nil, err
 	}
+	return &Logger{
+		Log:   writer.Log,
+		Logf:  writer.Logf,
+		Flush: writer.Flush,
+		Close: writer.Close,
+	}, nil
 }
 
 func rename(path string, year int, month time.Month, day int) {
