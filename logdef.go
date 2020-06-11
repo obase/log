@@ -142,16 +142,18 @@ func Setup(flushPeriod time.Duration, g *Logger, m map[string]*Logger) {
 func Get(name string) (ret *Logger) {
 	if name == "" {
 		ret = _glog
+	} else {
+		ret = _gmap[name]
 	}
-	ret = _gmap[name]
 	return
 }
 
 func Must(name string) (ret *Logger) {
 	if name == "" {
 		ret = _glog
+	} else {
+		ret = _gmap[name]
 	}
-	ret = _gmap[name]
 	if ret == nil {
 		panic("invalid logger " + name)
 	}
