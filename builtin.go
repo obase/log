@@ -171,6 +171,7 @@ func NewBuiltinLogger(c *Config) (*Logger, error) {
 		return nil, err
 	}
 	return &Logger{
+		Level: c.Level, // fixbug: missing level
 		Log:   writer.Log,
 		Logf:  writer.Logf,
 		Flush: writer.Flush,
