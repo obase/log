@@ -39,7 +39,13 @@ func testInfo(paral int, times int) {
 
 func TestDebug(t *testing.T) {
 	defer Flush()
-	ErrorStack("test it")
-	var a int64 = 1073741824
-	fmt.Println(a)
+	_glog.Logf(DEBUG, AddDay("2020-05-26", -7))
+}
+
+func AddDay(date string, n int) string {
+	t, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return date
+	}
+	return t.Add(time.Duration(n*24) * time.Hour).Format("2006-01-02")
 }
